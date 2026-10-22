@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PRINCIP — заказы, клиенты, замеры</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#F4EFE3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PRINCIP">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+  :root{
+    --bg:#F4EFE3; --cream-2:#ECE4D2; --ink:#1E2A3D; --ink-55:rgba(30,42,61,0.62); --line:rgba(30,42,61,0.16); --line-strong:rgba(30,42,61,0.32); --brass:#A9824C; --brass-dark:#8A6836;
+    --card:#FFFDF8; --violet:#A9824C; --violet-tint:#ECE4D2; --btn:#1E2A3D; --warn:#B5483F; --ok:#5F9A7E;
+    --free:#E2EBDD; --busy:#F0DAD3; --serif:Fraunces,Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;}
+  .wrap{max-width:720px;margin:0 auto;padding:0 12px 90px;}
+  header{position:sticky;top:0;z-index:20;background:rgba(244,239,227,0.95);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:max(10px,env(safe-area-inset-top)) 12px 8px;margin:0 -12px 12px;border-bottom:1px solid var(--line);}
+  h1{font-family:var(--serif);font-size:21px;margin:0;font-weight:500;letter-spacing:0.02em;}
+  h1 span{font-family:Inter,sans-serif;}
+  #syncBar{display:flex;gap:8px;align-items:center;font-size:12px;margin-top:4px;}
+  #syncText{flex:1;font-weight:700;}
+  #syncBar button{padding:6px 11px;font-size:12px;}
+  .note-bar{display:none;font-size:12px;padding:8px 10px;border-radius:12px;margin-top:6px;}
+  #memWarn{background:var(--busy);color:var(--warn);}
+  #userWarn{background:#ECE4D2;color:#6b5420;cursor:pointer;}
+  .tabs{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
+  .tab{flex:0 0 auto;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+  .tab.active{background:var(--btn);color:#fff;border-color:var(--btn);}
+  .tab .n{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--warn);color:#fff;font-size:11px;text-align:center;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(30,42,61,0.04),0 6px 16px -8px rgba(30,42,61,0.12);}
+  .card h2{font-family:var(--serif);font-size:16px;margin:0 0 10px;font-weight:600;}
+  .pcard{background:var(--t,var(--violet-tint));border:1px solid var(--line);border-left:6px solid var(--c,var(--violet));border-radius:18px;padding:14px 14px 14px 16px;margin-bottom:12px;}
+  .pcard h3{font-family:var(--serif);font-size:16px;margin:0 0 10px;font-weight:600;text-align:center;}
+  input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:14px;font-size:16px;background:#fff;color:var(--ink);font-family:inherit;margin-bottom:8px;}
+  textarea{min-height:64px;}
+  label.lb{display:block;font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin:6px 0 4px;color:var(--ink);}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;} .g2 > *{margin-bottom:8px;}
+  button{padding:11px 16px;background:var(--btn);color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+  button.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  button.small{padding:8px 12px;font-size:12.5px;}
+  button.brass{background:var(--violet);}
+  button.full{width:100%;}
+  .msg{font-size:12px;color:var(--ink-55);margin:6px 0 0;min-height:16px;} .msg.err{color:var(--warn);font-weight:700;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px;}
+  .chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:12.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .chip.on{background:var(--btn);color:#fff;border-color:var(--btn);}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--c,#999);}
+  .item{border-top:1px solid var(--line);padding:11px 0;} .item:first-child{border-top:none;}
+  .item .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
+  .item .nm{font-weight:800;font-size:15px;}
+  .meta{font-size:12.5px;color:var(--ink-55);margin:2px 0;white-space:pre-wrap;}
+  .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;}
+  .item select{margin:0;width:auto;max-width:100%;padding:8px 10px;font-size:14px;}
+  .pend{color:var(--warn);font-weight:700;font-size:12px;} .late{color:var(--warn);font-weight:700;}
+  a{color:#8A6836;}
+  .ocard{background:var(--t,#fff);border:1px solid var(--line);border-left:5px solid var(--c,#999);border-radius:12px;box-shadow:0 1px 2px rgba(30,42,61,0.04);padding:12px 13px;margin-bottom:10px;cursor:pointer;}
+  .ocard .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;}
+  .ocard .nm{font-family:var(--serif);font-weight:600;font-size:16px;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:800;color:#fff;background:var(--c,#999);white-space:nowrap;}
+  .badge.dark{color:#1E2A3D;}
+  .al{font-size:12.5px;margin-top:5px;font-weight:700;} .al.l2{color:var(--warn);} .al.l1{color:#9A6A2F;} .al.l0{color:var(--ink-55);font-weight:600;}
+  .stat{display:flex;gap:10px;} .stat > div{flex:1;text-align:center;}
+  .stat b{display:block;font-family:var(--serif);font-size:28px;font-weight:500;} .stat span{font-size:12px;color:var(--ink-55);}
+  .slot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px;border-radius:14px;margin-bottom:6px;font-size:14px;cursor:pointer;}
+  .slot.free{background:var(--free);} .slot.busy{background:var(--busy);}
+  .slot .time{font-weight:800;} .slot .who{font-size:12.5px;color:var(--ink-55);text-align:right;}
+  details.edit{margin-top:8px;} details.edit summary{font-size:13px;color:#8A6836;cursor:pointer;font-weight:700;} details.edit .body{padding-top:8px;}
+  .photo-btn{display:inline-block;padding:10px 16px;background:#fff;border:1px dashed var(--violet);border-radius:14px;font-size:14px;cursor:pointer;color:#8A6836;font-weight:700;}
+  .photo-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .thumb{position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;border:1px solid var(--line);} .thumb img{width:100%;height:100%;object-fit:cover;}
+  .thumb button{position:absolute;top:2px;right:2px;width:22px;height:22px;padding:0;border-radius:50%;background:rgba(30,42,61,0.75);font-size:12px;line-height:22px;}
+  .modal{position:fixed;inset:0;background:rgba(30,42,61,0.55);z-index:50;display:none;align-items:flex-end;justify-content:center;} .modal.open{display:flex;}
+  .modal .sheet{background:var(--bg);width:100%;max-width:720px;max-height:88vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px 14px 30px;}
+  .pickrow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);} .pickrow input{width:22px;height:22px;margin:2px 0 0;flex:0 0 auto;}
+  .panel{position:fixed;inset:0;background:var(--bg);z-index:40;overflow:auto;display:none;-webkit-overflow-scrolling:touch;} .panel.open{display:block;}
+  .panelTop{position:sticky;top:0;z-index:2;background:rgba(244,239,227,0.96);padding:max(10px,env(safe-area-inset-top)) 12px 8px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);}
+  .panelTop button{width:40px;height:40px;padding:0;border-radius:50%;background:#fff;color:var(--ink);border:1px solid var(--line);font-size:20px;}
+  #orderTitle,#taskTitleTop{font-family:var(--serif);font-size:17px;font-weight:600;flex:1;text-align:center;margin-right:40px;}
+  #orderBody{max-width:720px;margin:0 auto;padding:12px 12px 80px;}
+  .row2{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px;} .row2:last-child{border-bottom:none;}
+  .row2 b{font-weight:800;}
+  .phrow{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .phrow img.mini{width:34px;height:34px;object-fit:cover;border-radius:6px;}
+  .tick{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:15px;font-weight:600;} .tick input{width:24px;height:24px;margin:0;flex:0 0 auto;}
+  .banner{border-radius:14px;padding:11px 13px;margin-bottom:12px;font-weight:700;font-size:14px;background:var(--t,#fff);border:1px solid var(--line);border-left:6px solid var(--c,#999);}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--btn);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:700;z-index:80;display:none;}
+  .prb{display:inline-block;margin-right:6px;padding:1px 7px;border-radius:6px;font-size:10.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:1px;}
+  .prb.urgent{background:#B5483F;color:#fff;} .prb.low{background:rgba(30,42,61,0.1);color:var(--ink-55);}
+  .tcard .meta{margin-top:4px;} .tcard .late{color:var(--warn);font-weight:700;}
+  #taskPanel{z-index:41;}
+  ol.how{font-size:13px;line-height:1.5;padding-left:18px;margin:6px 0;}
+  table.st{width:100%;border-collapse:collapse;font-size:13px;} table.st th,table.st td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right;} table.st th:first-child,table.st td:first-child{text-align:left;} table.st th{font-size:11.5px;color:var(--ink-55);font-weight:700;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ПРИНЦИП <span id="ver" style="font-size:11px;font-weight:500;color:var(--ink-55);"></span></h1>
+    <div id="syncBar"><span id="syncText">…</span><button class="secondary" id="btnSyncNow">Отправить сейчас</button></div>
+    <div class="note-bar" id="memWarn">⚠️ Память телефона для приложения недоступна: данные хранятся только пока открыта страница. Не закрывайте её, пока не появится «Всё отправлено».</div>
+    <div class="note-bar" id="userWarn">Выберите своё имя в «Настройке» — тогда в истории заказа будет видно, кто что менял. Нажмите сюда.</div>
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="orders">Заказы</div>
+      <div class="tab" data-tab="tasks">Задачи<span class="n" id="nTasks" style="display:none"></span></div>
+      <div class="tab" data-tab="today">Сегодня<span class="n" id="nToday" style="display:none"></span></div>
+      <div class="tab" data-tab="leads">Обращения<span class="n" id="nLeads" style="display:none"></span></div>
+      <div class="tab" data-tab="clients">Клиенты</div>
+      <div class="tab" data-tab="booking">Запись</div>
+      <div class="tab" data-tab="measure">Замеры</div>
+      <div class="tab" data-tab="stats">Итоги</div>
+      <div class="tab" data-tab="settings">Настройка</div>
+    </div>
+  </header>
+
+  <!-- ===== ЗАКАЗЫ ===== -->
+  <div id="tab-orders">
+    <div class="card"><div class="stat">
+      <div><b id="ordCountWork">0</b><span>в работе</span></div>
+      <div><b id="ordCountAttn">0</b><span>требуют внимания</span></div>
+    </div></div>
+    <button class="full" id="btnNewOrder" style="margin-bottom:10px;">+ Новый заказ</button>
+    <input id="orderSearch" type="search" name="orderSearch_nofill" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Поиск: имя, телефон, № заказа">
+    <div class="chips" id="orderChips"></div>
+    <div id="orderList"></div>
+  </div>
+
+  <!-- ===== ЗАДАЧИ ===== -->
+  <div id="tab-tasks" style="display:none;">
+    <button class="full" id="btnNewTask" style="margin-bottom:10px;">+ Новая задача</button>
+    <input id="taskSearch" type="search" name="taskSearch_nofill" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Поиск по задачам">
+    <div class="chips" id="taskPeople"></div>
+    <div class="chips" id="taskChips"></div>
+    <div id="taskList"></div>
+  </div>
+
+  <!-- ===== СЕГОДНЯ ===== -->
+  <div id="tab-today" style="display:none;"><div id="todayBody"></div></div>
+
+  <!-- ===== ОБРАЩЕНИЯ ===== -->
+  <div id="tab-leads" style="display:none;">
+    <div class="card">
+      <h2>Новое обращение</h2>
+      <div class="g2"><input id="lName" placeholder="Имя"><input id="lPhone" type="tel" placeholder="Телефон"></div>
+      <div class="g2"><select id="lSource"></select><select id="lRequest"></select></div>
+      <input id="lNext" type="date" title="Когда связаться снова">
+      <textarea id="lComment" placeholder="Что хотят, бюджет, договорённости…"></textarea>
+      <button id="btnAddLead">+ Добавить обращение</button>
+      <p class="msg" id="leadMsg"></p>
+    </div>
+    <div class="card">
+      <h2>Все обращения</h2>
+      <input id="leadSearch" type="search" name="leadSearch_nofill" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Поиск по имени или телефону">
+      <div class="chips" id="leadFilters"></div>
+      <div id="leadList"></div>
+    </div>
+  </div>
+
+  <!-- ===== КЛИЕНТЫ ===== -->
+  <div id="tab-clients" style="display:none;">
+    <div class="card">
+      <h2>Клиенты</h2>
+      <div class="acts" style="margin-bottom:8px;">
+        <button id="btnPick" class="brass">+ Выбрать из обращений</button>
+        <button id="btnNewClient" class="secondary">+ Новый клиент</button>
+      </div>
+      <input id="clientSearch" type="search" name="clientSearch_nofill" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Поиск по имени, телефону, адресу">
+      <div id="clientList"></div>
+    </div>
+  </div>
+
+  <!-- ===== ЗАПИСЬ ===== -->
+  <div id="tab-booking" style="display:none;">
+    <div class="card">
+      <h2>Запись на замер / в офис</h2>
+      <input id="dateInput" type="date">
+      <div id="slotsList"></div>
+      <p class="msg" id="dayMsg"></p>
+    </div>
+  </div>
+
+  <!-- ===== ЗАМЕРЫ ===== -->
+  <div id="tab-measure" style="display:none;">
+    <div class="card">
+      <h2>Новый замер</h2>
+      <select id="mClient"></select>
+      <select id="mOrder"><option value="">— заказ не выбран —</option></select>
+      <div class="g2"><input id="mName" placeholder="Имя клиента"><input id="mPhone" type="tel" placeholder="Телефон"></div>
+      <input id="mAddress" placeholder="Адрес">
+      <input id="mDate" type="date">
+      <textarea id="mSizes" placeholder="Размеры помещения: кухня 3.2x2.4, потолок 2.65, окно 1.2x1.4 от пола 0.9…"></textarea>
+      <label class="photo-btn">📷 Добавить фото
+        <input type="file" id="mPhotoInput" accept="image/*" multiple style="display:none;">
+      </label>
+      <div id="mPhotoPreview" class="photo-preview"></div>
+      <div style="margin-top:10px;"><button id="btnAddMeasure">Сохранить замер</button></div>
+      <p class="msg" id="measureMsg"></p>
+      <div id="shareBox"></div>
+    </div>
+    <div class="card"><h2>Сохранённые замеры</h2><div id="measureList"></div></div>
+  </div>
+
+  <!-- ===== ИТОГИ ===== -->
+  <div id="tab-stats" style="display:none;"><div id="statsBody"></div></div>
+
+  <!-- ===== НАСТРОЙКА ===== -->
+  <div id="tab-settings" style="display:none;">
+    <div class="card">
+      <h2>Кто вы</h2>
+      <select id="userSel"></select>
+      <p class="msg">Ваше имя попадает в историю заказа: кто и когда перевёл этап. Выбирается один раз на этом телефоне.</p>
+    </div>
+    <div class="card">
+      <h2>Хранилище (Google Таблица)</h2>
+      <input id="urlInput" type="url" name="princip_url" autocomplete="off" placeholder="Ссылка Apps Script (…/exec)">
+      <input id="keyInput" type="password" name="princip_key" placeholder="Ключ доступа (тот же, что в скрипте)" autocomplete="new-password" data-lpignore="true">
+      <div class="acts">
+        <button id="btnSaveUrl">Сохранить ссылку</button>
+        <button id="btnPing" class="secondary">Проверить связь</button>
+      </div>
+      <p class="msg" id="settingsMsg"></p>
+      <p class="msg" id="verInfo" style="line-height:1.5;"></p>
+    </div>
+    <div class="card">
+      <h2>Уведомления о задачах (на почту)</h2>
+      <div id="mailInfo" class="meta" style="font-size:13px;line-height:1.6;white-space:pre-wrap;">…</div>
+      <div class="acts"><button id="btnTestMail" class="secondary">Прислать мне тестовое письмо</button></div>
+      <p class="msg" id="mailMsg"></p>
+    </div>
+    <div class="card">
+      <h2>Надёжность</h2>
+      <div id="reliab" class="meta" style="font-size:13px;line-height:1.6;"></div>
+      <div class="acts"><button id="btnBackup" class="secondary">Сохранить копию данных в файл</button></div>
+    </div>
+    <div class="card">
+      <h2>Как поставить на телефон</h2>
+      <ol class="how">
+        <li><b>iPhone:</b> откройте ссылку в Safari → «Поделиться» → «На экран Домой». Обязательно: иначе Safari может стереть данные.</li>
+        <li><b>Android:</b> Chrome → меню ⋮ → «Установить приложение».</li>
+        <li>Первый раз откройте при интернете — дальше открывается и без него.</li>
+        <li>Перед тем как закрыть приложение, смотрите вверху: «✓ Всё отправлено».</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- выбор из обращений -->
+<div class="modal" id="pickModal">
+  <div class="sheet">
+    <h2 style="margin:0 0 8px;font-size:15px;">Выберите, кого перенести в клиенты</h2>
+    <input id="pickSearch" type="search" name="pickSearch_nofill" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Поиск">
+    <div id="pickList"></div>
+    <div class="acts" style="margin-top:12px;">
+      <button id="btnPickGo" class="brass">Перенести выбранных</button>
+      <button id="btnPickClose" class="secondary">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- новый заказ -->
+<div class="modal" id="newOrderModal">
+  <div class="sheet">
+    <h2 style="margin:0 0 8px;font-size:16px;">Новый заказ</h2>
+    <label class="lb">Клиент</label>
+    <select id="noClient"></select>
+    <div id="noNewClient">
+      <input id="noName" placeholder="Имя нового клиента">
+      <input id="noPhone" type="tel" placeholder="Телефон">
+    </div>
+    <div class="g2">
+      <div><label class="lb">Изделие</label><select id="noItem"></select></div>
+      <div><label class="lb">№ заказа (папки)</label><input id="noNumber" inputmode="numeric"></div>
+    </div>
+    <p class="msg" id="noMsg"></p>
+    <div class="acts" style="margin-top:8px;">
+      <button id="btnNoCreate">Создать заказ</button>
+      <button id="btnNoClose" class="secondary">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- новая задача -->
+<div class="modal" id="newTaskModal">
+  <div class="sheet">
+    <h2 style="margin:0 0 8px;font-size:16px;font-family:var(--serif);">Новая задача</h2>
+    <label class="lb">Название</label>
+    <input id="ntTitle" placeholder="Что нужно сделать" autocomplete="off">
+    <label class="lb">Описание</label>
+    <textarea id="ntDesc" placeholder="Подробности (необязательно)"></textarea>
+    <label class="lb">Срок</label>
+    <select id="ntDue"><option value="none">Без срока</option><option value="today">Сегодня</option><option value="tomorrow">Завтра</option><option value="date">Выбрать дату</option></select>
+    <div class="g2" id="ntDateRow" style="display:none;"><div><input id="ntDate" type="date"></div><div><input id="ntTime" type="time" title="Время (необязательно)"></div></div>
+    <label class="lb">Срочность</label>
+    <select id="ntPriority"><option value="urgent">Срочно</option><option value="normal" selected>Обычная</option><option value="low">Не срочно</option></select>
+    <label class="lb">Ответственные</label>
+    <div id="ntAsg"></div>
+    <label class="lb">По заказу (необязательно)</label>
+    <select id="ntOrder"></select>
+    <div id="ntRepeatRow" style="display:none;">
+      <label class="lb">Повтор</label>
+      <select id="ntRepeat"><option value="">Не повторять</option><option value="daily">Каждый день</option><option value="weekly">Каждую неделю</option><option value="monthly">Каждый месяц</option><option value="every">Каждые N дней</option></select>
+      <input id="ntEvery" type="number" min="1" value="2" inputmode="numeric" placeholder="Сколько дней" style="display:none;">
+    </div>
+    <p class="msg" id="ntMsg"></p>
+    <div class="acts" style="margin-top:8px;">
+      <button id="btnNtCreate">Создать задачу</button>
+      <button id="btnNtClose" class="secondary">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- карточка задачи -->
+<div class="panel" id="taskPanel">
+  <div class="panelTop"><button id="taskBack">‹</button><div id="taskTitleTop"></div></div>
+  <div id="taskBody" style="max-width:720px;margin:0 auto;padding:12px 12px 80px;"></div>
+</div>
+
+<!-- карточка заказа -->
+<div class="panel" id="orderPanel">
+  <div class="panelTop"><button id="orderBack">‹</button><div id="orderTitle"></div></div>
+  <div id="orderBody"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================= ВЕРСИИ ================= */
+const APP_VERSION = '3.0 (22.10.2026)';   // менять при каждом обновлении приложения
+const NEED_SCRIPT_REV = 4;                // какая версия скрипта нужна этому приложению
+
+/* ================= СПРАВОЧНИКИ ================= */
+const SOURCES = ['ВК','MAX','Звонок','Яндекс Карты','Авито','Сарафан','Инстаграм','Пришёл сам','Другое'];
+const ITEMS = ['Кухня','Шкаф','Прихожая','Детская','Гардеробная','Ванная','Другое'];
+const REQUESTS = ITEMS;
+const LEAD_STATUSES = ['Новое','Записан','Был в офисе','Ушёл думать','Отказ','Стал клиентом'];
+const USERS = ['Алина','Диляра','Саша'];
+const SLOT_HOURS = [9,10,11,12,13,14,15,16,17,18];
+const PHOTO_CATS = ['Техника','Замер','Фурнитура','Другое'];
+const STORE = { lead:'leads', client:'clients', booking:'bookings', measure:'measures', order:'orders', event:'events', photo:'photos', task:'tasks', tevent:'tevents' };
+
+/* Этапы заказа. Цвета — как папки; поменять цвет = поменять одну строку. */
+const STAGES = ['Новый заказ','Не запущено','Просчёт с фабрикой','Проектировка технолога','Запуск в цеху','Готовность на складе','Отгрузка с фабрики','Доставка до клиента','Ожидает монтаж','Монтаж','Приёмка (акт)'];
+const CLAIM = 'Рекламация';
+const ALL_STAGES = STAGES.concat([CLAIM]);
+const STAGE_STYLE = {
+  'Новый заказ':            { c:'#98A0AA', folder:'серую' },
+  'Не запущено':            { c:'#D6B462', folder:'жёлтую', dark:true },
+  'Просчёт с фабрикой':     { c:'#6FA7BD', folder:'голубую' },
+  'Проектировка технолога': { c:'#6FA7BD', folder:'голубую' },
+  'Запуск в цеху':          { c:'#D18C5B', folder:'оранжевую' },
+  'Готовность на складе':   { c:'#D18C5B', folder:'оранжевую' },
+  'Отгрузка с фабрики':     { c:'#6F89B8', folder:'синюю' },
+  'Доставка до клиента':    { c:'#6FA58A', folder:'зелёную' },
+  'Ожидает монтаж':         { c:'#6FA58A', folder:'зелёную' },
+  'Монтаж':                 { c:'#6FA58A', folder:'зелёную' },
+  'Приёмка (акт)':          { c:'#4B5260', folder:'графитовую' },
+  'Рекламация':             { c:'#C47E98', folder:'розовую' }
+};
+/* Нормы времени на этапе, в рабочих днях. Ответ фабрики и технолога — 5 раб. дней (ваш норматив);
+   «Не запущено» — 10 (моё допущение, поменяйте при необходимости). */
+const NORMS_BD = { 'Не запущено':10, 'Просчёт с фабрикой':5, 'Проектировка технолога':5 };
+const CONTRACT_DAYS = 45;      // срок производства по договору, рабочих дней от «Запуска в цеху»
+const UNPAID_STAGES = ['Отгрузка с фабрики','Доставка до клиента','Ожидает монтаж','Монтаж'];
+const MONEY_FIELDS = { sum:'Сумма заказа', prepay:'Предоплата', postpay:'Постоплата', extras:'Допы', claims:'Рекламации' };
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const pad = n => String(n).padStart(2, '0');
+function ymd(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+function todayStr(){ return ymd(new Date()); }
+function parseYmd(s){ const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? new Date(+m[1], +m[2]-1, +m[3]) : null; }
+function parseIso(s){ if(!s) return null; const d = new Date(s); return isNaN(d) ? null : d; }
+function fmtDate(s){ const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? m[3] + '.' + m[2] + '.' + m[1] : (s || ''); }
+function fmtDateTime(iso){ const d = parseIso(iso); return d ? pad(d.getDate()) + '.' + pad(d.getMonth()+1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) : ''; }
+const num = v => { const n = parseFloat(String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.')); return isNaN(n) ? 0 : n; };
+const money = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₽';
+function businessDaysBetween(a, b){      // рабочих дней от a до b (a не считается, b считается); праздники не учитываются
+  if(!a || !b) return 0;
+  const d = new Date(a.getFullYear(), a.getMonth(), a.getDate()), end = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+  let n = 0; while(d < end){ d.setDate(d.getDate() + 1); const w = d.getDay(); if(w !== 0 && w !== 6) n++; } return n;
+}
+function addBusinessDays(a, n){
+  const d = new Date(a.getFullYear(), a.getMonth(), a.getDate()); let k = 0;
+  while(k < n){ d.setDate(d.getDate() + 1); const w = d.getDay(); if(w !== 0 && w !== 6) k++; } return d;
+}
+function tint(hex){ return hex + '26'; }
+function getUser(){ try{ return localStorage.getItem('princip_user') || ''; }catch(e){ return window.__user || ''; } }
+function setUser(u){ try{ localStorage.setItem('princip_user', u); }catch(e){ window.__user = u; } }
+function toast(t){ const el = $('toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(()=>{ el.style.display = 'none'; }, 1800); }
+
+/* ================= ХРАНИЛИЩЕ НА ТЕЛЕФОНЕ (IndexedDB) ================= */
+const DB_STORES = ['queue','leads','clients','bookings','measures','orders','events','photos','tasks','tevents'];
+let _db = null, memMode = false; const memStores = {};
+function openDb(){
+  if(_db) return _db;
+  _db = new Promise((resolve, reject)=>{
+    if(typeof indexedDB === 'undefined'){ reject(new Error('no idb')); return; }
+    const r = indexedDB.open('princip', 3);
+    r.onupgradeneeded = ()=>{ const d = r.result; DB_STORES.forEach(n=>{ if(!d.objectStoreNames.contains(n)) d.createObjectStore(n, {keyPath:'id'}); }); };
+    r.onsuccess = ()=> resolve(r.result);
+    r.onerror = ()=> reject(r.error);
+  }).catch(()=>{ memMode = true; $('memWarn').style.display = 'block'; return null; });
+  return _db;
+}
+async function dbAll(s){ const d = await openDb(); if(!d) return Object.values(memStores[s] || {});
+  return new Promise((res, rej)=>{ const q = d.transaction(s,'readonly').objectStore(s).getAll(); q.onsuccess = ()=>res(q.result); q.onerror = ()=>rej(q.error); }); }
+async function dbGet(s, id){ const d = await openDb(); if(!d) return (memStores[s] || {})[id];
+  return new Promise((res, rej)=>{ const q = d.transaction(s,'readonly').objectStore(s).get(id); q.onsuccess = ()=>res(q.result); q.onerror = ()=>rej(q.error); }); }
+async function dbPut(s, v){ const d = await openDb(); if(!d){ (memStores[s] = memStores[s] || {})[v.id] = v; return; }
+  return new Promise((res, rej)=>{ const tx = d.transaction(s,'readwrite'); tx.objectStore(s).put(v); tx.oncomplete = ()=>res(); tx.onerror = ()=>rej(tx.error); tx.onabort = ()=>rej(tx.error || new Error('abort')); }); }
+async function dbDel(s, id){ const d = await openDb(); if(!d){ if(memStores[s]) delete memStores[s][id]; return; }
+  return new Promise((res, rej)=>{ const tx = d.transaction(s,'readwrite'); tx.objectStore(s).delete(id); tx.oncomplete = ()=>res(); tx.onerror = ()=>rej(tx.error); }); }
+
+/* Атомарное «прочитать → изменить → записать» в одной транзакции: параллельные правки и отмены не затирают друг друга.
+   fn(текущая запись) возвращает: объект — записать, null — удалить, undefined — ничего не менять. */
+async function dbUpdate(s, id, fn){
+  const d = await openDb();
+  if(!d){ const m = (memStores[s] = memStores[s] || {}); const nv = fn(m[id]); if(nv === null) delete m[id]; else if(nv) m[id] = nv; return; }
+  return new Promise((res, rej)=>{
+    const tx = d.transaction(s, 'readwrite'), os = tx.objectStore(s), g = os.get(id);
+    g.onsuccess = ()=>{ const nv = fn(g.result); if(nv === null) os.delete(id); else if(nv) os.put(nv); };
+    tx.oncomplete = ()=>res(); tx.onerror = ()=>rej(tx.error); tx.onabort = ()=>rej(tx.error || new Error('abort'));
+  });
+}
+
+function getUrl(){ try{ return localStorage.getItem('princip_url') || ''; }catch(e){ return window.__url || ''; } }
+function setUrl(u){ try{ localStorage.setItem('princip_url', u); }catch(e){ window.__url = u; } }
+function getKey(){ try{ return localStorage.getItem('princip_key') || ''; }catch(e){ return window.__key || ''; } }
+function setKey(k){ try{ localStorage.setItem('princip_key', k); }catch(e){ window.__key = k; } }
+
+/* ================= СВЯЗЬ С СЕРВЕРОМ ================= */
+async function fetchT(url, opts, ms){
+  const c = new AbortController(); const t = setTimeout(()=>c.abort(), ms);
+  try{ return await fetch(url, Object.assign({signal:c.signal}, opts || {})); } finally{ clearTimeout(t); }
+}
+let lastTs = 0;   // порядок операций строго по возрастанию, даже если созданы в одну миллисекунду
+async function enqueue(payload){ lastTs = Math.max(Date.now(), lastTs + 1); await dbPut('queue', {id:uid(), ts:lastTs, attempts:0, payload}); updateSyncBar(); }
+let flushing = false, flushAgain = false;
+let syncEpoch = 0;    // растёт при каждой успешной отправке на сервер: список, запрошенный до этого, уже устарел
+async function flushQueue(){
+  const url = getUrl(); if(!url) return;
+  if(flushing){ flushAgain = true; return; }     // пока идёт отправка, новые записи подхватим следующим кругом сразу, не через 15 секунд
+  flushing = true; let sent = false;
+  try{
+    do{
+      flushAgain = false; let netFail = false;
+      const q = (await dbAll('queue')).sort((a,b)=>a.ts - b.ts);
+      for(const item of q){
+        try{
+          const rec = item.payload.record, heavy = rec && ((rec.photos && rec.photos.length) || rec.data);
+          const res = await fetchT(url, {method:'POST', body:JSON.stringify(Object.assign({key:getKey()}, item.payload))}, heavy ? 90000 : 25000);
+          const data = await res.json();
+          if(!data.ok){ item.attempts = (item.attempts || 0) + 1; item.lastError = String(data.error || 'ошибка сервера'); await dbPut('queue', item); continue; }
+        }catch(e){ netFail = true; break; }
+        syncEpoch++;                       // СРАЗУ после ответа сервера, до удаления из очереди: любой список, запрошенный раньше, уже устарел
+        await dbDel('queue', item.id); sent = true;
+        await markSynced(item.payload);
+      }
+      if(netFail) break;
+    } while(flushAgain);
+  } finally { flushing = false; flushAgain = false; updateSyncBar(); }
+  if(sent) await refreshAll({heavy:true});
+}
+async function markSynced(p){
+  if(p.action !== 'upsert') return;
+  const left = (await dbAll('queue')).filter(i => i.payload.entity === p.entity && i.payload.record && i.payload.record.id === p.record.id);
+  if(left.length) return;
+  await dbUpdate(STORE[p.entity], p.record.id, cur => cur ? Object.assign({}, cur, {_pending:false}) : undefined);
+}
+async function updateSyncBar(){
+  const q = await dbAll('queue'); const n = q.length; const bad = q.filter(i => i.lastError).length;
+  const off = (typeof navigator !== 'undefined' && navigator.onLine === false) ? ' · нет интернета' : '';
+  let t, color;
+  if(!getUrl()){ t = '⚠️ Не подключено хранилище (вкладка «Настройка»)'; color = 'var(--warn)'; }
+  else if(n > 0){ t = '⏳ Не отправлено: ' + n + off + (bad ? ' · есть ошибки (Настройка)' : ''); color = 'var(--warn)'; }
+  else { t = '✓ Всё отправлено' + off; color = 'var(--ink)'; }
+  $('syncText').textContent = t; $('syncText').style.color = color;
+  $('userWarn').style.display = getUser() ? 'none' : 'block';
+}
+
+/* Сохранение: сначала в очередь, потом на телефон; форма очищается только при успехе.
+   transient — уходит на сервер, но на телефоне не хранится (файл фото). localOnly — только на телефоне (миниатюра). */
+const localWrites = {};   // когда запись последний раз менялась на этом телефоне — чтобы устаревший ответ сервера её не откатил
+async function saveRecord(entity, fields, photos, transient, localOnly){
+  localWrites[entity + ':' + fields.id] = Date.now();
+  const opRecord = Object.assign({}, fields, transient || {});
+  if(photos && photos.length) opRecord.photos = photos;
+  await enqueue({action:'upsert', entity, record:opRecord});
+  let merged;
+  await dbUpdate(STORE[entity], fields.id, cur => (merged = Object.assign({}, cur || {}, fields, localOnly || {}, {_pending:true})));
+  flushQueue();
+  return merged;
+}
+const localDeleted = {};  // что отменено на этом телефоне: ещё несколько минут не принимаем это обратно из устаревших списков
+async function deleteRecord(entity, id){
+  localWrites[entity + ':' + id] = Date.now(); localDeleted[entity + ':' + id] = Date.now();
+  await enqueue({action:'delete', entity, id});
+  await dbDel(STORE[entity], id);
+  flushQueue();
+}
+async function refreshEntity(entity){
+  const url = getUrl(); if(!url) return false;
+  let data; const t0 = Date.now(), e0 = syncEpoch;
+  try{ const res = await fetchT(url + '?action=list&entity=' + entity + '&key=' + encodeURIComponent(getKey()), {}, 25000); data = await res.json(); }catch(e){ return false; }
+  if(!data || !data.ok) return false;
+  if(syncEpoch !== e0) return false;    // пока грузился список, на сервер что-то ушло — этот список устарел, после отправки загрузим заново
+  const store = STORE[entity];
+  const local = await dbAll(store);
+  const queue = await dbAll('queue');
+  const pendingIds = new Set(local.filter(r => r._pending).map(r => r.id));
+  const deleting = new Set(queue.filter(i => i.payload.action === 'delete' && i.payload.entity === entity).map(i => i.payload.id));
+  if(syncEpoch !== e0) return false;     // повторная проверка уже ПОСЛЕ чтения очереди
+  const serverIds = new Set();
+  for(const r of data.records){
+    serverIds.add(r.id);
+    if(pendingIds.has(r.id) || deleting.has(r.id)) continue;
+    if(Date.now() - (localDeleted[entity + ':' + r.id] || 0) < 300000) continue;
+    if((localWrites[entity + ':' + r.id] || 0) >= t0) continue;   // меняли на телефоне, пока шёл запрос, — ответ сервера устарел
+    await dbUpdate(store, r.id, cur => (cur && cur._pending) ? undefined : Object.assign({}, cur && cur._thumb ? {_thumb:cur._thumb} : {}, r, {_pending:false}));
+  }
+  for(const r of local){ if(!r._pending && !serverIds.has(r.id) && (localWrites[entity + ':' + r.id] || 0) < t0) await dbUpdate(store, r.id, cur => (cur && !cur._pending) ? null : undefined); }
+  return true;
+}
+/* Частые данные — каждые 2 минуты; история и фото — при открытии заказа и при ручной отправке (экономим слабый интернет). */
+async function refreshAll(opts){
+  const list = ['lead','client','order','booking','measure','task','tevent'].concat(opts && opts.heavy ? ['event','photo'] : []);
+  for(const e of list){ try{ await refreshEntity(e); }catch(err){} }
+  await renderAll();
+}
+
+/* ================= ВКЛАДКИ ================= */
+const state = { leadFilter:'active', orderFilter:'all', showArchive:false, tab:'orders', openOrderId:'', photoCat:'Техника', photoCaption:'', banner:null };
+const TABS = ['orders','tasks','today','leads','clients','booking','measure','stats','settings'];
+function switchTab(name){
+  state.tab = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  TABS.forEach(id => { $('tab-' + id).style.display = (id === name) ? 'block' : 'none'; });
+  if(name === 'settings') renderSettings();
+  if(name === 'stats') renderStats();
+  if(name === 'today') renderToday();
+  if(name === 'tasks') renderTasks(true);
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', ()=>switchTab(t.dataset.tab)));
+function fillSelect(el, items, withEmpty){ el.innerHTML = (withEmpty ? '<option value="">' + withEmpty + '</option>' : '') + items.map(i => '<option>' + esc(i) + '</option>').join(''); }
+function isEditing(container){ const a = document.activeElement; return !!(a && container.contains(a) && ['INPUT','TEXTAREA','SELECT'].includes(a.tagName)); }
+function openDetails(container){ return !!container.querySelector('details[open]'); }
+
+/* ================= ЗАКАЗЫ: правила и подсказки ================= */
+function cleanNo(t){ return String(t || '').replace(/(\d)\.0\b/g, '$1'); }   // «дог. 623.0» → «дог. 623»
+function itemTitle(o){
+  const it = String(o.item || '').trim(), ti = cleanNo(o.title).trim();
+  if(!it) return ti; if(!ti) return it;
+  return ti.toLowerCase().startsWith(it.toLowerCase()) ? ti : it + ' · ' + ti;   // не писать «шкаф · шкаф · дог. 115»
+}
+function balanceOf(o){ return num(o.sum) + num(o.extras) - num(o.prepay) - num(o.postpay); }
+function stageIdx(s){ return STAGES.indexOf(s); }
+function stageStyle(s){ return STAGE_STYLE[s] || STAGE_STYLE['Новый заказ']; }
+function preMissing(o){ const r = []; if(!o.preMeasure) r.push('замер'); if(!o.preProject) r.push('проект'); if(!o.preContract) r.push('договор и предоплата'); return r; }
+function nextOrderNumber(orders){ let m = 0; orders.forEach(o=>{ const n = parseInt(String(o.number || '').replace(/\D/g,''), 10); if(!isNaN(n) && n > m) m = n; }); return String(m + 1); }
+function phoneKey(p){ return String(p || '').replace(/\D/g, '').slice(-10); }
+function orderLabel(o, c){ return (o.number ? '№' + o.number + ' · ' : '') + ((c && c.name) || 'Заказ'); }
+
+/* Что требует внимания по заказу. lv: 2 — срочно, 1 — внимание, 0 — справка. */
+function orderAlerts(o, now){
+  const out = []; if(!o || o.archived === '1') return out;
+  now = now || new Date();
+  const changed = parseIso(o.stageChangedAt) || parseIso(o.createdAt);
+  const bd = changed ? businessDaysBetween(changed, now) : 0;
+  const norm = NORMS_BD[o.stage];
+  if(norm && bd > norm) out.push({lv:2, t:'Стоит на этапе ' + bd + ' раб. дн. (норма ' + norm + ')'});
+  const ls = parseYmd(o.launchDate), idx = stageIdx(o.stage);
+  if(ls && idx >= stageIdx('Запуск в цеху') && idx <= stageIdx('Отгрузка с фабрики')){
+    const due = addBusinessDays(ls, CONTRACT_DAYS), td = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const left = due >= td ? businessDaysBetween(td, due) : -businessDaysBetween(due, td);
+    if(left <= 5) out.push({lv:left < 0 ? 2 : 1, t:'Срок по договору ' + fmtDate(ymd(due)) + ': ' + (left >= 0 ? 'осталось ' + left + ' раб. дн.' : 'просрочен на ' + (-left) + ' раб. дн.')});
+  }
+  const dd = parseYmd(o.deliveryDate);
+  if(dd && o.stage !== 'Приёмка (акт)'){
+    const td = new Date(now.getFullYear(), now.getMonth(), now.getDate()), diff = Math.round((dd - td) / 864e5);
+    if(diff < 0) out.push({lv:2, t:'Дата сдачи ' + fmtDate(o.deliveryDate) + ' прошла'});
+    else if(diff <= 3) out.push({lv:1, t:'Дата сдачи через ' + diff + ' дн. (' + fmtDate(o.deliveryDate) + ')'});
+  }
+  const bal = balanceOf(o);
+  if(UNPAID_STAGES.includes(o.stage) && num(o.sum) > 0 && bal > 0) out.push({lv:2, t:'Остаток ' + money(bal) + ' не оплачен'});
+  if((o.stage === 'Не запущено') && preMissing(o).length) out.push({lv:0, t:'Не хватает: ' + preMissing(o).join(', ')});
+  return out;
+}
+const alertLevel = (o, now) => Math.max(-1, ...orderAlerts(o, now).map(a => a.lv));
+
+async function logEvent(orderId, type, text){
+  return saveRecord('event', {id:uid(), orderId, ts:new Date().toISOString(), by:getUser() || 'не указано', type, text});
+}
+
+/* Смена этапа: вперёд, назад и в любую сторону. Запоминаем, кто и когда. */
+async function changeStage(orderId, newStage, note){
+  const o = await dbGet('orders', orderId); if(!o || o.stage === newStage) return;
+  const old = o.stage, nowIso = new Date().toISOString();
+  const f = {id:orderId, stage:newStage, stageChangedAt:nowIso, stageBy:getUser() || 'не указано', stageNote:''};
+  if(newStage === CLAIM){ f.stageBeforeClaim = old === CLAIM ? (o.stageBeforeClaim || '') : old; }
+  else if(o.stageBeforeClaim) f.stageBeforeClaim = '';
+  if(newStage === 'Запуск в цеху' && !o.launchDate) f.launchDate = todayStr();
+  await saveRecord('order', f);
+  await logEvent(orderId, 'stage', old + ' → ' + newStage + (o.stageNote ? ' · заметка: ' + o.stageNote : '') + (note ? ' · ' + note : ''));
+  const st = stageStyle(newStage);
+  state.banner = {c:st.c, t:'📁 Переложите папку в ' + st.folder.toUpperCase() + ' (этап «' + newStage + '»)'};
+  await renderAll(); renderOrderPanel(true);
+}
+
+/* ================= ЗАКАЗЫ: главная ================= */
+async function renderOrders(force){
+  const box = $('orderList');
+  if(!force && isEditing($('tab-orders'))){ state.dirtyOrders = true; return; }
+  const [orders, clients] = await Promise.all([dbAll('orders'), dbAll('clients')]);
+  const cmap = {}; clients.forEach(c => cmap[c.id] = c);
+  const live = orders.filter(o => o.archived !== '1'), arch = orders.filter(o => o.archived === '1');
+  const now = new Date();
+  $('ordCountWork').textContent = live.length;
+  $('ordCountAttn').textContent = live.filter(o => alertLevel(o, now) >= 1).length;
+  const counts = {}; live.forEach(o => counts[o.stage] = (counts[o.stage] || 0) + 1);
+  let chips = '<span class="chip' + (state.orderFilter === 'all' && !state.showArchive ? ' on' : '') + '" data-k="all">Все ' + live.length + '</span>';
+  ALL_STAGES.forEach(s => { if(counts[s]) chips += '<span class="chip' + (state.orderFilter === s && !state.showArchive ? ' on' : '') + '" data-k="' + esc(s) + '" style="--c:' + stageStyle(s).c + '"><i class="dot"></i>' + esc(s) + ' ' + counts[s] + '</span>'; });
+  if(arch.length) chips += '<span class="chip' + (state.showArchive ? ' on' : '') + '" data-k="__arch">Архив ' + arch.length + '</span>';
+  $('orderChips').innerHTML = chips;
+  const q = $('orderSearch').value.trim().toLowerCase();
+  let list = state.showArchive ? arch : live.filter(o => state.orderFilter === 'all' || o.stage === state.orderFilter);
+  if(q) list = list.filter(o => { const c = cmap[o.clientId] || {}; return ((o.number || '') + ' ' + (c.name || '') + ' ' + (c.phone || '') + ' ' + (o.title || '') + ' ' + (o.item || '')).toLowerCase().includes(q); });
+  list.sort((a, b) => (alertLevel(b, now) - alertLevel(a, now)) || ((a.deliveryDate || '9999').localeCompare(b.deliveryDate || '9999')) || (parseInt(b.number, 10) || 0) - (parseInt(a.number, 10) || 0));
+  box.innerHTML = list.length ? list.map(o => {
+    const c = cmap[o.clientId], st = stageStyle(o.stage), changed = parseIso(o.stageChangedAt) || parseIso(o.createdAt);
+    const days = changed ? Math.max(0, Math.floor((now - changed) / 864e5)) : 0;
+    const al = orderAlerts(o, now);
+    const pre = (o.stage === 'Не запущено' || o.stage === 'Новый заказ') ? '<div class="meta">' + [['preMeasure','замер'],['preProject','проект'],['preContract','договор']].map(([k, l]) => (o[k] ? '✓ ' : '○ ') + l).join(' · ') + '</div>' : '';
+    return '<div class="ocard" data-id="' + esc(o.id) + '" style="--c:' + st.c + ';--t:' + tint(st.c) + '">' +
+      '<div class="top"><span class="nm">' + esc(orderLabel(o, c)) + '</span><span class="badge' + (st.dark ? ' dark' : '') + '" style="--c:' + st.c + '">' + esc(o.stage) + '</span></div>' +
+      '<div class="meta">' + esc([itemTitle(o), 'на этапе ' + days + ' дн.'].filter(Boolean).join(' · ')) + (o._pending ? ' <span class="pend">⏳ не отправлено</span>' : '') + '</div>' + pre +
+      al.filter(a => a.lv > 0 || o.stage !== 'Не запущено').map(a => '<div class="al l' + a.lv + '">' + (a.lv === 2 ? '⚠ ' : a.lv === 1 ? '⏰ ' : '') + esc(a.t) + '</div>').join('') + '</div>';
+  }).join('') : (q ? '<p class="msg">Ничего не найдено по «' + esc(q) + '». <a href="#" id="clearOrderSearch">Очистить поиск</a></p>' : '<p class="msg">Заказов нет. Нажмите «+ Новый заказ» или перенесите обращение в клиенты.</p>');
+}
+$('orderChips').addEventListener('click', e => {
+  const c = e.target.closest('.chip'); if(!c) return;
+  if(c.dataset.k === '__arch'){ state.showArchive = !state.showArchive; }
+  else { state.showArchive = false; state.orderFilter = c.dataset.k; }
+  renderOrders(true);
+});
+$('orderSearch').addEventListener('input', ()=>renderOrders(true));
+$('orderList').addEventListener('click', e => { if(e.target && e.target.id === 'clearOrderSearch'){ e.preventDefault(); $('orderSearch').value = ''; renderOrders(true); } });
+// браузер (автозаполнение / восстановление формы) мог подставить в поиск чужой текст — чистим при каждом открытии
+function clearSearchBoxes(){ ['orderSearch','leadSearch','clientSearch','pickSearch'].forEach(i => { const el = $(i); if(el && el.value){ el.value = ''; } }); }
+clearSearchBoxes(); setTimeout(()=>{ clearSearchBoxes(); renderOrders(true); }, 400);
+window.addEventListener('pageshow', ()=>{ clearSearchBoxes(); });
+$('orderList').addEventListener('click', e => { const c = e.target.closest('.ocard'); if(c) openOrder(c.dataset.id); });
+
+/* ================= ЗАКАЗЫ: карточка ================= */
+function openOrder(id){
+  state.openOrderId = id; state.banner = null; state.resetScroll = true; state.histOpen = false;
+  $('orderPanel').classList.add('open'); document.body.style.overflow = 'hidden';
+  renderOrderPanel(true);
+  refreshEntity('event').then(()=>refreshEntity('photo')).then(()=>renderOrderPanel());
+}
+function closeOrder(){ state.openOrderId = ''; state.banner = null; $('orderPanel').classList.remove('open'); document.body.style.overflow = ''; renderAll(); }
+$('orderBack').addEventListener('click', closeOrder);
+
+function inp(f, label, value, type, extra){
+  return '<label class="lb">' + esc(label) + '</label><input data-f="' + f + '" type="' + (type || 'text') + '" value="' + esc(value) + '" ' + (extra || '') + '>';
+}
+async function renderOrderPanel(force){
+  const id = state.openOrderId; if(!id) return;
+  const panel = $('orderPanel');
+  if(!force && isEditing(panel)){ state.dirtyPanel = true; return; }
+  const o = await dbGet('orders', id); if(!o){ closeOrder(); return; }
+  const c = o.clientId ? await dbGet('clients', o.clientId) : null;
+  const events = (await dbAll('events')).filter(e => e.orderId === id).sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
+  const photos = (await dbAll('photos')).filter(p => p.orderId === id);
+  const measures = (await dbAll('measures')).filter(m => m.orderId === id);
+  const st = stageStyle(o.stage), now = new Date();
+  const changed = parseIso(o.stageChangedAt) || parseIso(o.createdAt);
+  const days = changed ? Math.max(0, Math.floor((now - changed) / 864e5)) : 0;
+  const al = orderAlerts(o, now);
+  $('orderTitle').textContent = orderLabel(o, c);
+  const idx = stageIdx(o.stage);
+  let nextBtn = '';
+  if(o.stage === CLAIM && o.stageBeforeClaim) nextBtn = '<button class="full" data-act="backclaim">Вернуть на этап «' + esc(o.stageBeforeClaim) + '»</button>';
+  else if(idx >= 0 && idx < STAGES.length - 1) nextBtn = '<button class="full" data-act="next">Следующий этап: ' + esc(STAGES[idx + 1]) + ' →</button>';
+  const showPre = (o.stage === 'Не запущено' || o.stage === 'Новый заказ');
+  const allPre = !preMissing(o).length;
+  let launchInfo = '';
+  if(o.stage === 'Запуск в цеху' || (o.launchDate && idx > stageIdx('Запуск в цеху') && idx <= stageIdx('Отгрузка с фабрики'))){
+    const ls = parseYmd(o.launchDate);
+    if(ls){ const due = addBusinessDays(ls, CONTRACT_DAYS), gone = businessDaysBetween(ls, now); launchInfo = '<div class="row2"><span>Запуск в цеху</span><b>' + fmtDate(o.launchDate) + '</b></div><div class="row2"><span>День по договору</span><b>' + Math.min(gone, 999) + ' из ' + CONTRACT_DAYS + '</b></div><div class="row2"><span>Срок по договору</span><b>' + fmtDate(ymd(due)) + '</b></div>'; }
+  }
+  const shipTick = ['Готовность на складе','Отгрузка с фабрики','Доставка до клиента'].includes(o.stage)
+    ? '<label class="tick"><input type="checkbox" data-act="shipcheck"' + (o.shipCheck ? ' checked' : '') + '> Проверено при отгрузке' + (o.shipCheck ? ' <span class="meta" style="margin:0 0 0 6px;">' + fmtDate(o.shipCheck) + '</span>' : '') + '</label>' : '';
+  const bal = balanceOf(o);
+  const catCount = {}; photos.forEach(p => catCount[p.category] = (catCount[p.category] || 0) + 1);
+  const catPhotos = photos.filter(p => p.category === state.photoCat).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  const scroller = state.resetScroll ? 0 : panel.scrollTop; state.resetScroll = false;
+  const hd = $('orderBody').querySelector('details'); if(hd) state.histOpen = hd.open;
+  let h = '';
+  if(state.banner) h += '<div class="banner" style="--c:' + state.banner.c + ';--t:' + tint(state.banner.c) + '">' + esc(state.banner.t) + '</div>';
+  h += al.filter(a => a.lv > 0).map(a => '<div class="banner" style="--c:' + (a.lv === 2 ? '#B5483F' : '#D6B462') + ';--t:' + (a.lv === 2 ? '#D43D3D1F' : '#F2B7051F') + '">' + (a.lv === 2 ? '⚠ ' : '⏰ ') + esc(a.t) + '</div>').join('');
+  // этап
+  h += '<div class="pcard" style="--c:' + st.c + ';--t:' + tint(st.c) + '"><h3>Этап</h3>' +
+    '<div style="text-align:center;margin-bottom:8px;"><span class="badge' + (st.dark ? ' dark' : '') + '" style="--c:' + st.c + '">' + esc(o.stage) + '</span> <span class="meta" style="display:inline;">на этапе ' + days + ' дн.' + (o.stageBy ? ' · перевёл ' + esc(o.stageBy) : '') + '</span></div>' +
+    '<select data-act="stage">' + ALL_STAGES.map(s => '<option' + (s === o.stage ? ' selected' : '') + '>' + esc(s) + '</option>').join('') + '</select>' +
+    nextBtn +
+    (showPre ? '<div style="margin-top:8px;">' + [['preMeasure','Замер сделан'],['preProject','Проект согласован'],['preContract','Договор и предоплата']].map(([k, l]) => '<label class="tick"><input type="checkbox" data-pre="' + k + '"' + (o[k] ? ' checked' : '') + '> ' + l + (o[k] ? ' <span class="meta" style="margin:0 0 0 6px;">' + fmtDate(o[k]) + '</span>' : '') + '</label>').join('') +
+      (allPre && o.stage === 'Не запущено' ? '<button class="full secondary" data-act="tolaunch" style="margin-top:6px;">Всё готово → «Просчёт с фабрикой»</button>' : '') + '</div>' : '') +
+    shipTick + launchInfo +
+    '<label class="lb">Заметка к этапу (одна строка)</label><input data-f="stageNote" value="' + esc(o.stageNote) + '" placeholder="Что важно помнить на этом этапе"></div>';
+  // данные
+  h += '<div class="pcard"><h3>Данные заказа</h3>' +
+    '<div class="row2"><span>Заказчик</span><b>' + esc(c ? c.name : '—') + '</b></div>' +
+    '<div class="row2"><span>Телефон</span><b>' + (c && c.phone ? '<a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + '</a>' : '—') + '</b></div>' +
+    inp('number', '№ заказа (номер бумажной папки)', o.number, 'text', 'inputmode="numeric"') +
+    '<label class="lb">Изделие</label><select data-f="item">' + [''].concat(ITEMS, (o.item && ITEMS.indexOf(o.item) < 0) ? [o.item] : []).map(s => '<option' + (s === o.item ? ' selected' : '') + '>' + esc(s) + '</option>').join('') + '</select>' +
+    inp('title', 'Название / что именно', o.title, 'text', 'placeholder="Кухня угловая, 3.2 м"') +
+    inp('address', 'Адрес', o.address, 'text', 'placeholder="Город, улица, дом"') +
+    '<div class="g2"><div>' + inp('contractDate', 'Дата договора', o.contractDate, 'date') + '</div><div>' + inp('deliveryDate', 'Дата сдачи', o.deliveryDate, 'date') + '</div></div>' +
+    '<label class="lb">Заметка</label><textarea data-f="note" placeholder="Пожелания, договорённости, напоминания">' + esc(o.note) + '</textarea></div>';
+  // деньги
+  h += '<div class="pcard"><h3>Стоимость и оплаты</h3>' +
+    '<div class="g2"><div>' + inp('sum', 'Сумма заказа', o.sum, 'text', 'inputmode="decimal" placeholder="0"') + '</div><div>' + inp('prepay', 'Предоплата', o.prepay, 'text', 'inputmode="decimal" placeholder="0"') + '</div></div>' +
+    '<div class="g2"><div>' + inp('postpay', 'Постоплата', o.postpay, 'text', 'inputmode="decimal" placeholder="0"') + '</div><div><label class="lb">Монтаж в договоре</label><select data-f="mountIncluded"><option value="">не указано</option><option' + (o.mountIncluded === 'да' ? ' selected' : '') + '>да</option><option' + (o.mountIncluded === 'нет' ? ' selected' : '') + '>нет</option></select></div></div>' +
+    '<div class="g2"><div>' + inp('extras', 'Допы, ₽', o.extras, 'text', 'inputmode="decimal" placeholder="0"') + '</div><div>' + inp('extrasNote', 'Допы: что', o.extrasNote) + '</div></div>' +
+    '<div class="g2"><div>' + inp('claims', 'Рекламации, ₽', o.claims, 'text', 'inputmode="decimal" placeholder="0"') + '</div><div>' + inp('claimsNote', 'Рекламации: что', o.claimsNote) + '</div></div>' +
+    '<div class="row2"><span>Остаток к оплате</span><b id="balVal" style="color:' + (bal > 0 ? 'var(--warn)' : 'var(--ok)') + '">' + money(bal) + '</b></div></div>';
+  // фото
+  h += '<div class="pcard"><h3>Фото</h3><div class="chips" id="photoCats">' + PHOTO_CATS.map(k => '<span class="chip' + (k === state.photoCat ? ' on' : '') + '" data-cat="' + esc(k) + '">' + esc(k) + (catCount[k] ? ' (' + catCount[k] + ')' : '') + '</span>').join('') + '</div>' +
+    '<input id="photoCaption" placeholder="Подпись к этим фото (необязательно)" value="' + esc(state.photoCaption) + '">' +
+    '<label class="photo-btn">📷 Добавить в «' + esc(state.photoCat) + '»<input type="file" id="orderPhotoInput" accept="image/*" multiple style="display:none;"></label>' +
+    '<p class="msg" id="photoMsg"></p>' +
+    (catPhotos.length ? catPhotos.map(p => '<div class="phrow"><span>' + esc(p.caption || 'без подписи') + '<br><span class="meta">' + fmtDateTime(p.createdAt) + (p.by ? ' · ' + esc(p.by) : '') + '</span></span>' +
+      (p._thumb ? '<img class="mini" src="' + esc(p._thumb) + '">' : '') +
+      (p.fileUrl ? '<a href="' + esc(p.fileUrl) + '" target="_blank">Открыть</a>' : '<span class="pend">⏳</span>') + '</div>').join('') : '<p class="msg">В категории «' + esc(state.photoCat) + '» фото пока нет.</p>') + '</div>';
+  // замеры
+  h += '<div class="pcard"><h3>Замеры</h3>' + (measures.length ? measures.sort((a, b) => (b.date || '').localeCompare(a.date || '')).map(m => '<div class="phrow"><span><b>' + fmtDate(m.date) + '</b> ' + esc((m.sizes || '').slice(0, 80)) + '</span>' + (m.photosUrl ? '<a href="' + esc(m.photosUrl) + '" target="_blank">Фото</a>' : '') + '</div>').join('') : '<p class="msg">Замеров по этому заказу пока нет.</p>') +
+    '<button class="small secondary" data-act="addmeasure" style="margin-top:8px;">📐 + Замер по этому заказу</button></div>';
+  // задачи по заказу
+  const otasks = (await dbAll('tasks')).filter(x => x.orderId === id).sort((a, b) => (a.stage === 'Готово') - (b.stage === 'Готово') || (b.createdAt || '').localeCompare(a.createdAt || ''));
+  h += '<div class="pcard"><h3>Задачи по заказу (' + otasks.length + ')</h3>' + (otasks.length ? otasks.map(x => '<div class="phrow" data-tid="' + esc(x.id) + '" style="cursor:pointer;"><span>' + (x.priority === 'urgent' ? '<span class="prb urgent">Срочно</span>' : '') + esc(x.title) + '<br><span class="meta">' + esc(x.stage) + ' · ' + esc(taskDueLabel(x, now)) + (x.assignees ? ' · ' + esc(x.assignees) : '') + '</span></span></div>').join('') : '<p class="msg">Задач пока нет.</p>') +
+    '<button class="small secondary" data-act="newtask" style="margin-top:8px;">+ Задача по этому заказу</button></div>';
+  // история
+  h += '<details class="pcard"' + (state.histOpen ? ' open' : '') + ' style="--c:#98A0AA;--t:#fff;"><summary style="font-weight:800;cursor:pointer;">История заказа (' + events.length + ')</summary><div style="padding-top:8px;">' +
+    (events.length ? events.map(e => '<div class="phrow"><span>' + esc(e.text) + '<br><span class="meta">' + fmtDateTime(e.ts) + ' · ' + esc(e.by) + '</span></span></div>').join('') : '<p class="msg">Записей пока нет.</p>') + '</div></details>';
+  // действия
+  h += '<div class="pcard" style="--c:#98A0AA;--t:#fff;"><h3>Действия по заказу</h3><div class="acts" style="justify-content:center;">' +
+    '<button class="small secondary" data-act="share">📤 Сводка в чат</button>' +
+    '<button class="small secondary" data-act="archive">' + (o.archived === '1' ? 'Вернуть из архива' : 'В архив') + '</button></div>' +
+    '<p class="msg" style="text-align:center;">Изменения сохраняются автоматически. Удалять заказы нельзя — только в архив.</p></div>';
+  $('orderBody').innerHTML = h;
+  panel.scrollTop = scroller;
+}
+
+$('orderBody').addEventListener('change', async e => {
+  const id = state.openOrderId, t = e.target; if(!id) return;
+  if(t.id === 'orderPhotoInput'){ await onOrderPhotoFiles(t); return; }
+  if(t.dataset.act === 'stage'){ await changeStage(id, t.value); return; }
+  if(t.dataset.pre){
+    const k = t.dataset.pre, labels = {preMeasure:'Замер сделан', preProject:'Проект согласован', preContract:'Договор и предоплата'};
+    const val = t.checked ? todayStr() : '';
+    state.banner = null;
+    await saveRecord('order', {id, [k]:val});
+    await logEvent(id, 'check', labels[k] + (val ? ': отмечено ' + fmtDate(val) : ': отметка снята'));
+    const o2 = await dbGet('orders', id);
+    if(!preMissing(o2).length && o2.stage === 'Не запущено') state.banner = {c:'#6FA58A', t:'Замер, проект и договор готовы — можно переводить на «Просчёт с фабрикой»'};
+    await renderAll(); renderOrderPanel(true); return;
+  }
+  if(t.dataset.act === 'shipcheck'){
+    const val = t.checked ? todayStr() : '';
+    state.banner = null;
+    await saveRecord('order', {id, shipCheck:val});
+    await logEvent(id, 'check', 'Проверено при отгрузке' + (val ? ': ' + fmtDate(val) : ': отметка снята'));
+    renderOrderPanel(true); return;
+  }
+  if(t.dataset.f) await saveOrderField(id, t.dataset.f, t.value.trim());
+});
+$('orderBody').addEventListener('input', e => {
+  if(e.target.id === 'photoCaption') state.photoCaption = e.target.value;
+  if(e.target.dataset && MONEY_FIELDS[e.target.dataset.f]){
+    const get = f => { const el = $('orderBody').querySelector('[data-f="' + f + '"]'); return el ? el.value : ''; };
+    const bal = num(get('sum')) + num(get('extras')) - num(get('prepay')) - num(get('postpay'));
+    const bv = $('balVal'); if(bv){ bv.textContent = money(bal); bv.style.color = bal > 0 ? 'var(--warn)' : 'var(--ok)'; }
+  }
+});
+$('orderBody').addEventListener('click', async e => {
+  const id = state.openOrderId; if(!id) return;
+  const cat = e.target.closest('[data-cat]'); if(cat){ state.photoCat = cat.dataset.cat; renderOrderPanel(true); return; }
+  const tk = e.target.closest('[data-tid]'); if(tk){ closeOrder(); openTask(tk.dataset.tid); return; }
+  const b = e.target.closest('[data-act]'); if(!b || b.tagName === 'INPUT' || b.tagName === 'SELECT') return;
+  const o = await dbGet('orders', id), act = b.dataset.act;
+  if(act === 'newtask'){ openNewTask(id); return; }
+  if(act === 'next'){ const i = stageIdx(o.stage); if(i >= 0 && i < STAGES.length - 1) await changeStage(id, STAGES[i + 1]); }
+  if(act === 'backclaim' && o.stageBeforeClaim) await changeStage(id, o.stageBeforeClaim);
+  if(act === 'tolaunch') await changeStage(id, 'Просчёт с фабрикой');
+  if(act === 'archive'){
+    await saveRecord('order', {id, archived:o.archived === '1' ? '' : '1'});
+    await logEvent(id, 'archive', o.archived === '1' ? 'Возвращён из архива' : 'Отправлен в архив');
+    if(o.archived !== '1'){ closeOrder(); toast('Заказ в архиве'); } else { renderAll(); renderOrderPanel(true); }
+  }
+  if(act === 'share'){ const c = o.clientId ? await dbGet('clients', o.clientId) : null; shareText(orderSummaryText(o, c)); }
+  if(act === 'addmeasure'){ const c = o.clientId ? await dbGet('clients', o.clientId) : null; closeOrder(); switchTab('measure'); await fillClientSelect(); $('mClient').value = o.clientId || ''; await fillOrderSelect(); $('mOrder').value = id; prefillFromClient(c, o); }
+});
+function orderSummaryText(o, c){
+  return ['📦 ' + orderLabel(o, c), itemTitle(o), 'Этап: ' + o.stage, o.deliveryDate ? 'Дата сдачи: ' + fmtDate(o.deliveryDate) : '', o.address, c && c.phone].filter(Boolean).join('\n');
+}
+async function saveOrderField(id, f, value){
+  const o = await dbGet('orders', id); if(!o) return;
+  const old = o[f] || ''; if(String(old) === String(value)) return;
+  if(f === 'number' && value){
+    const dup = (await dbAll('orders')).find(x => x.id !== id && String(x.number) === String(value));
+    if(dup && !confirm('Заказ с номером ' + value + ' уже есть. Оставить такой же номер?')){ renderOrderPanel(true); return; }
+  }
+  await saveRecord('order', {id, [f]:value});
+  if(MONEY_FIELDS[f]) await logEvent(id, 'money', MONEY_FIELDS[f] + ': ' + (old || '—') + ' → ' + (value || '—'));
+  if(f === 'number' || f === 'title'){ const c = o.clientId ? await dbGet('clients', o.clientId) : null; const o2 = await dbGet('orders', id); $('orderTitle').textContent = orderLabel(o2, c); }
+  toast('✓ сохранено');
+  renderAll();
+}
+
+/* ---- фото заказа ---- */
+function makeThumb(file){ return compressImage(file, 160, 0.6); }
+async function addOrderPhotoItems(orderId, cat, caption, items){
+  const msg = $('photoMsg'); let saved = 0;
+  for(const it of items){
+    const pid = uid();
+    try{
+      await saveRecord('photo', {id:pid, orderId, category:cat, caption:caption || '', fileUrl:'', createdAt:new Date().toISOString(), by:getUser() || 'не указано'},
+        null, {data:it.data, name:pid + '.jpg'}, {_thumb:it.thumb || ''});
+      saved++;
+    }catch(err){
+      if(msg){ msg.className = 'msg err'; msg.textContent = '⚠️ Сохранено ' + saved + ' из ' + items.length + ': на телефоне не хватило места (' + err.message + '). Остальные фото не сохранены — сделайте их позже.'; }
+      break;
+    }
+  }
+  if(saved){ await logEvent(orderId, 'photo', 'Фото (' + cat + '): +' + saved); }
+  return saved;
+}
+async function onOrderPhotoFiles(input){
+  const files = [...input.files]; if(!files.length) return;
+  const id = state.openOrderId, msg = $('photoMsg');
+  if(files.length > 25){ msg.className = 'msg err'; msg.textContent = 'За раз не больше 25 фото.'; input.value = ''; return; }
+  msg.className = 'msg'; msg.textContent = 'Обрабатываю фото (' + files.length + ')…';
+  const items = [];
+  for(const f of files){ try{ const d = await compressImage(f); const th = await makeThumb(f); items.push({data:d.split(',')[1], thumb:th}); }catch(err){} }
+  input.value = '';
+  const saved = await addOrderPhotoItems(id, state.photoCat, state.photoCaption, items);
+  state.photoCaption = '';
+  if(saved === items.length) toast('Фото сохранено: ' + saved);
+  renderOrderPanel(true);
+}
+
+/* ================= НОВЫЙ ЗАКАЗ ================= */
+async function openNewOrder(presetClientId){
+  const clients = (await dbAll('clients')).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  $('noClient').innerHTML = '<option value="">— новый клиент —</option>' + clients.map(c => '<option value="' + esc(c.id) + '">' + esc((c.name || 'Без имени') + (c.phone ? ' · ' + c.phone : '')) + '</option>').join('');
+  $('noClient').value = presetClientId || '';
+  $('noNewClient').style.display = presetClientId ? 'none' : 'block';
+  fillSelect($('noItem'), ITEMS);
+  $('noNumber').value = nextOrderNumber(await dbAll('orders'));
+  $('noName').value = ''; $('noPhone').value = ''; $('noMsg').textContent = ''; $('noMsg').className = 'msg';
+  $('newOrderModal').classList.add('open');
+}
+$('noClient').addEventListener('change', ()=>{ $('noNewClient').style.display = $('noClient').value ? 'none' : 'block'; });
+$('btnNewOrder').addEventListener('click', ()=>openNewOrder(''));
+$('btnNoClose').addEventListener('click', ()=>$('newOrderModal').classList.remove('open'));
+async function createOrderRecord(clientId, item, number, extra){
+  const c = clientId ? await dbGet('clients', clientId) : null;
+  const nowIso = new Date().toISOString();
+  const rec = Object.assign({id:'o_' + uid(), createdAt:nowIso, clientId, number, item:item || '', title:'', stage:'Новый заказ', stageChangedAt:nowIso, stageBy:getUser() || 'не указано',
+    stageNote:'', stageBeforeClaim:'', launchDate:'', address:(c && c.address) || '', contractDate:'', deliveryDate:'', note:'', sum:'', prepay:'', postpay:'', mountIncluded:'',
+    extras:'', extrasNote:'', claims:'', claimsNote:'', preMeasure:'', preProject:'', preContract:'', shipCheck:'', archived:''}, extra || {});
+  await saveRecord('order', rec);
+  await logEvent(rec.id, 'create', 'Заказ создан');
+  return rec;
+}
+$('btnNoCreate').addEventListener('click', async ()=>{
+  const msg = $('noMsg'); msg.className = 'msg';
+  try{
+    let cid = $('noClient').value;
+    if(!cid){
+      const name = $('noName').value.trim(), phone = $('noPhone').value.trim();
+      if(!name){ msg.className = 'msg err'; msg.textContent = 'Впишите имя клиента или выберите из списка.'; return; }
+      const dup = await findByPhone(phone);
+      if(dup && dup.client && confirm('Такой телефон уже есть у клиента «' + dup.client.name + '». Создать заказ ему?')){ cid = dup.client.id; }
+      else if(dup && !dup.client && !confirm('Такой телефон уже есть в обращениях («' + dup.name + '»). Всё равно создать нового клиента?')){ return; }
+      if(!cid){ cid = 'c_' + uid(); await saveRecord('client', {id:cid, createdAt:new Date().toISOString(), name, phone, address:'', orderType:'', contractNo:'', contractSum:'', stage:'', comment:'', leadId:''}); }
+    }
+    const rec = await createOrderRecord(cid, $('noItem').value, $('noNumber').value.trim());
+    $('newOrderModal').classList.remove('open');
+    await renderAll(); openOrder(rec.id);
+  }catch(err){ msg.className = 'msg err'; msg.textContent = '⚠️ Не сохранено: ' + err.message; }
+});
+
+/* Дубли по телефону (последние 10 цифр) */
+async function findByPhone(phone, exceptId){
+  const k = phoneKey(phone); if(k.length < 10) return null;
+  const [leads, clients] = await Promise.all([dbAll('leads'), dbAll('clients')]);
+  const c = clients.find(x => x.id !== exceptId && phoneKey(x.phone) === k); if(c) return {client:c, name:c.name};
+  const l = leads.find(x => x.id !== exceptId && phoneKey(x.phone) === k); if(l) return {client:null, name:l.name};
+  return null;
+}
+
+/* ================= СЕГОДНЯ ================= */
+async function renderToday(){
+  const [leads, bookings, orders, clients, queue, allTasks] = await Promise.all([dbAll('leads'), dbAll('bookings'), dbAll('orders'), dbAll('clients'), dbAll('queue'), dbAll('tasks')]);
+  const cmap = {}; clients.forEach(c => cmap[c.id] = c);
+  const today = todayStr(), now = new Date();
+  const act = leads.filter(l => l.status !== 'Стал клиентом' && l.status !== 'Отказ' && !l.clientId && ((l.nextContact && l.nextContact <= today) || l.status === 'Новое'))
+    .sort((a, b) => (a.nextContact || '9999').localeCompare(b.nextContact || '9999'));
+  const todays = bookings.filter(b => b.date === today).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  const attn = orders.filter(o => o.archived !== '1').map(o => ({o, al:orderAlerts(o, now).filter(a => a.lv >= 1)})).filter(x => x.al.length).sort((a, b) => Math.max(...b.al.map(x => x.lv)) - Math.max(...a.al.map(x => x.lv)));
+  const myTasks = await myTaskAttention(allTasks, now);
+  const cnt = act.length + attn.length + myTasks.length;
+  $('nToday').style.display = cnt ? 'inline-block' : 'none'; $('nToday').textContent = cnt;
+  let h = '';
+  if(getUser()){ const tctx = await taskCtx(); h += '<div class="card"><h2>Мои задачи (' + myTasks.length + ')</h2>' + (myTasks.length ? myTasks.map(t => taskCardHtml(t, tctx)).join('') : '<p class="msg">На сегодня задач нет ✓</p>') + '</div>'; }
+  h += '<div class="card"><h2>Позвонить / написать (' + act.length + ')</h2>' + (act.length ? act.map(l => {
+    const late = l.nextContact && l.nextContact <= today;
+    return '<div class="item" data-go="leads"><div class="top"><span class="nm">' + esc(l.name || 'Без имени') + '</span>' + (l.phone ? '<a href="tel:' + esc(l.phone) + '">' + esc(l.phone) + '</a>' : '') + '</div><div class="meta' + (late ? ' late' : '') + '">' + (late ? '⚠ связаться ' + fmtDate(l.nextContact) : 'новое обращение, ещё не обработано') + ' · ' + esc([l.source, l.request].filter(Boolean).join(' · ')) + '</div></div>';
+  }).join('') : '<p class="msg">Некому звонить ✓</p>') + '</div>';
+  h += '<div class="card"><h2>Записи на сегодня (' + todays.length + ')</h2>' + (todays.length ? todays.map(b => '<div class="item" data-go="booking"><div class="top"><span class="nm">' + esc(b.time) + ' · ' + esc(b.name) + '</span>' + (b.phone ? '<a href="tel:' + esc(b.phone) + '">' + esc(b.phone) + '</a>' : '') + '</div></div>').join('') : '<p class="msg">Записей нет.</p>') + '</div>';
+  h += '<div class="card"><h2>Заказы: требуют внимания (' + attn.length + ')</h2>' + (attn.length ? attn.map(({o, al}) => {
+    const st = stageStyle(o.stage);
+    return '<div class="ocard" data-oid="' + esc(o.id) + '" style="--c:' + st.c + ';--t:' + tint(st.c) + '"><div class="top"><span class="nm">' + esc(orderLabel(o, cmap[o.clientId])) + '</span><span class="badge' + (st.dark ? ' dark' : '') + '" style="--c:' + st.c + '">' + esc(o.stage) + '</span></div>' +
+      al.map(a => '<div class="al l' + a.lv + '">' + (a.lv === 2 ? '⚠ ' : '⏰ ') + esc(a.t) + '</div>').join('') + '</div>';
+  }).join('') : '<p class="msg">Всё в норме ✓</p>') + '</div>';
+  if(queue.length) h += '<div class="card"><h2>Не отправлено</h2><p class="msg err">На телефоне ждут отправки: ' + queue.length + '. Найдите связь и нажмите «Отправить сейчас» вверху.</p></div>';
+  $('todayBody').innerHTML = h;
+}
+$('todayBody').addEventListener('click', e => {
+  const tk = e.target.closest('[data-tid]'); if(tk){ openTask(tk.dataset.tid); return; }
+  const o = e.target.closest('[data-oid]'); if(o){ openOrder(o.dataset.oid); return; }
+  const g = e.target.closest('[data-go]'); if(g && e.target.tagName !== 'A') switchTab(g.dataset.go);
+});
+
+/* ================= ОБРАЩЕНИЯ ================= */
+function chipsHtml(items, current){ return items.map(([k, label]) => '<span class="chip' + (k === current ? ' on' : '') + '" data-k="' + esc(k) + '">' + esc(label) + '</span>').join(''); }
+const LEAD_FILTERS = [['active','Активные'],['all','Все'],['Стал клиентом','Стали клиентами'],['Отказ','Отказ']];
+function leadVisible(l, f, q){
+  const isActive = l.status !== 'Стал клиентом' && l.status !== 'Отказ';
+  if(f === 'active' && !isActive) return false;
+  if(f !== 'active' && f !== 'all' && l.status !== f) return false;
+  if(q){ const hay = ((l.name || '') + ' ' + (l.phone || '')).toLowerCase(); if(!hay.includes(q)) return false; }
+  return true;
+}
+async function renderLeads(force){
+  const box = $('leadList');
+  if(!force && (isEditing(box) || isEditing($('tab-leads')))) { state.dirtyLeads = true; return; }
+  const leads = (await dbAll('leads')).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  $('leadFilters').innerHTML = chipsHtml(LEAD_FILTERS, state.leadFilter);
+  const q = $('leadSearch').value.trim().toLowerCase();
+  const list = leads.filter(l => leadVisible(l, state.leadFilter, q));
+  const today = todayStr();
+  const newCount = leads.filter(l => l.status === 'Новое').length;
+  $('nLeads').style.display = newCount ? 'inline-block' : 'none'; $('nLeads').textContent = newCount;
+  box.innerHTML = list.length ? list.map(l => {
+    const active = l.status !== 'Стал клиентом' && l.status !== 'Отказ';
+    const late = active && l.nextContact && l.nextContact <= today;
+    return '<div class="item" data-id="' + esc(l.id) + '">' +
+      '<div class="top"><span class="nm">' + esc(l.name || 'Без имени') + '</span>' + (l.phone ? '<a href="tel:' + esc(l.phone) + '">' + esc(l.phone) + '</a>' : '') + '</div>' +
+      '<div class="meta">' + esc([l.source, l.request, (l.createdAt || '').slice(0, 10)].filter(Boolean).join(' · ')) + (l._pending ? ' <span class="pend">⏳ не отправлено</span>' : '') + '</div>' +
+      (l.comment ? '<div class="meta">' + esc(l.comment) + '</div>' : '') +
+      (l.nextContact ? '<div class="meta' + (late ? ' late' : '') + '">' + (late ? '⚠ Связаться: ' : 'Связаться: ') + esc(l.nextContact) + '</div>' : '') +
+      '<div class="acts"><select data-act="status">' + LEAD_STATUSES.map(s => '<option' + (s === l.status ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>' +
+      (!l.clientId && l.status !== 'Стал клиентом' ? '<button class="small brass" data-act="toclient">→ В клиенты</button>' : '') + '</div></div>';
+  }).join('') : '<p class="msg">Ничего нет.</p>';
+}
+$('leadFilters').addEventListener('click', e => { const c = e.target.closest('.chip'); if(!c) return; state.leadFilter = c.dataset.k; renderLeads(true); });
+$('leadSearch').addEventListener('input', ()=>renderLeads(true));
+$('leadList').addEventListener('change', async e => {
+  if(e.target.dataset.act !== 'status') return;
+  const id = e.target.closest('.item').dataset.id;
+  await saveRecord('lead', {id, status:e.target.value});
+  state.dirtyLeads = false; renderLeads(true);
+});
+$('leadList').addEventListener('click', async e => {
+  const b = e.target.closest('[data-act="toclient"]'); if(!b) return;
+  b.disabled = true;
+  try{ await convertLead(b.closest('.item').dataset.id); switchTab('orders'); }catch(err){ alert('Не удалось сохранить на телефоне: ' + err.message); b.disabled = false; }
+});
+$('btnAddLead').addEventListener('click', async ()=>{
+  const name = $('lName').value.trim(), phone = $('lPhone').value.trim(), msg = $('leadMsg');
+  if(!name && !phone){ msg.className = 'msg err'; msg.textContent = 'Впишите хотя бы имя или телефон.'; return; }
+  const dup = await findByPhone(phone);
+  if(dup && !confirm('Такой телефон уже есть: «' + dup.name + '» (' + (dup.client ? 'клиент' : 'обращение') + '). Всё равно добавить?')) return;
+  try{
+    await saveRecord('lead', {id:uid(), createdAt:new Date().toISOString(), name, phone, source:$('lSource').value, request:$('lRequest').value,
+      comment:$('lComment').value.trim(), status:'Новое', nextContact:$('lNext').value, clientId:''});
+  }catch(err){ msg.className = 'msg err'; msg.textContent = '⚠️ НЕ сохранено — нет места на телефоне? ' + err.message; return; }
+  ['lName','lPhone','lComment','lNext'].forEach(i => $(i).value = '');
+  msg.className = 'msg'; msg.textContent = 'Добавлено.'; state.dirtyLeads = false; renderLeads(true);
+});
+
+/* Обращение → клиент + первый заказ. Номера выводятся из номера обращения, поэтому повторное
+   нажатие не создаст дублей и не сбросит уже изменённое. */
+async function convertLead(leadId){
+  const lead = await dbGet('leads', leadId); if(!lead) return;
+  const clientId = 'c_' + lead.id, orderId = 'o_' + lead.id;
+  if(!await dbGet('clients', clientId)){
+    await saveRecord('client', {id:clientId, createdAt:new Date().toISOString(), name:lead.name || '', phone:lead.phone || '', address:'',
+      orderType:lead.request || '', contractNo:'', contractSum:'', stage:'', comment:lead.comment || '', leadId:lead.id});
+  }
+  if(!await dbGet('orders', orderId)){
+    await createOrderRecord(clientId, lead.request || '', nextOrderNumber(await dbAll('orders')), {id:orderId});
+  }
+  await saveRecord('lead', {id:lead.id, status:'Стал клиентом', clientId});
+  await renderAll();
+}
+
+/* ================= КЛИЕНТЫ ================= */
+async function renderClients(force){
+  const box = $('clientList');
+  if(!force && (isEditing($('tab-clients')) || openDetails(box))){ state.dirtyClients = true; return; }
+  const clients = (await dbAll('clients')).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  const measures = await dbAll('measures'), orders = await dbAll('orders');
+  const q = $('clientSearch').value.trim().toLowerCase();
+  const list = clients.filter(c => !q || ((c.name || '') + ' ' + (c.phone || '') + ' ' + (c.address || '')).toLowerCase().includes(q));
+  box.innerHTML = list.length ? list.map(c => {
+    const nm = measures.filter(m => m.clientId === c.id).length;
+    const os = orders.filter(o => o.clientId === c.id).sort((a, b) => (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0));
+    return '<div class="item" data-id="' + esc(c.id) + '">' +
+      '<div class="top"><span class="nm">' + esc(c.name || 'Без имени') + '</span>' + (c.phone ? '<a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + '</a>' : '') + '</div>' +
+      '<div class="meta">' + esc([c.address, c.contractNo ? 'договор ' + c.contractNo : ''].filter(Boolean).join(' · ')) + (c._pending ? ' <span class="pend">⏳ не отправлено</span>' : '') + '</div>' +
+      (c.comment ? '<div class="meta">' + esc(c.comment) + '</div>' : '') +
+      '<div class="chips" style="margin:8px 0 4px;">' + os.map(o => { const st = stageStyle(o.stage); return '<span class="chip" data-act="openorder" data-oid="' + esc(o.id) + '" style="--c:' + st.c + ';background:' + tint(st.c) + ';"><i class="dot"></i>' + esc((o.number ? '№' + o.number + ' ' : '') + (o.item || 'Заказ') + ' · ' + o.stage) + (o.archived === '1' ? ' (архив)' : '') + '</span>'; }).join('') +
+      '<span class="chip" data-act="neworder">+ Заказ</span></div>' +
+      '<div class="acts"><button class="small secondary" data-act="measure">📐 Замер' + (nm ? ' (' + nm + ')' : '') + '</button></div>' +
+      '<details class="edit"><summary>Изменить данные клиента</summary><div class="body">' +
+      '<input data-f="name" placeholder="Имя" value="' + esc(c.name) + '">' +
+      '<input data-f="phone" type="tel" placeholder="Телефон" value="' + esc(c.phone) + '">' +
+      '<input data-f="address" placeholder="Адрес" value="' + esc(c.address) + '">' +
+      '<div class="g2"><input data-f="contractNo" placeholder="№ договора" value="' + esc(c.contractNo) + '"><input data-f="contractSum" type="number" inputmode="numeric" placeholder="Сумма, ₽" value="' + esc(c.contractSum) + '"></div>' +
+      '<textarea data-f="comment" placeholder="Комментарий">' + esc(c.comment) + '</textarea>' +
+      '<button class="small" data-act="saveclient">Сохранить</button></div></details></div>';
+  }).join('') : '<p class="msg">Клиентов пока нет. Нажмите «Выбрать из обращений».</p>';
+}
+$('clientSearch').addEventListener('input', ()=>renderClients(true));
+$('clientList').addEventListener('click', async e => {
+  const item = e.target.closest('.item'); if(!item) return;
+  const tgt = e.target.closest('[data-act]'); if(!tgt) return;
+  const act = tgt.dataset.act;
+  if(act === 'openorder'){ openOrder(tgt.dataset.oid); return; }
+  if(act === 'neworder'){ openNewOrder(item.dataset.id); return; }
+  if(act === 'measure'){ const c = await dbGet('clients', item.dataset.id); switchTab('measure'); await fillClientSelect(); $('mClient').value = c.id; await fillOrderSelect(); prefillFromClient(c); return; }
+  if(act === 'saveclient'){
+    const fields = {id:item.dataset.id};
+    item.querySelectorAll('[data-f]').forEach(i => fields[i.dataset.f] = i.value.trim());
+    try{ await saveRecord('client', fields); }catch(err){ alert('Не сохранено: ' + err.message); return; }
+    state.dirtyClients = false; renderClients(true);
+  }
+});
+$('btnNewClient').addEventListener('click', async ()=>{
+  const name = prompt('Имя клиента:'); if(!name) return;
+  const phone = prompt('Телефон:') || '';
+  const dup = await findByPhone(phone);
+  if(dup && !confirm('Такой телефон уже есть: «' + dup.name + '». Всё равно добавить?')) return;
+  try{ await saveRecord('client', {id:uid(), createdAt:new Date().toISOString(), name, phone, address:'', orderType:'', contractNo:'', contractSum:'', stage:'', comment:'', leadId:''}); }
+  catch(err){ alert('Не сохранено: ' + err.message); return; }
+  renderClients(true);
+});
+
+/* ---- выбор из обращений ---- */
+async function renderPick(){
+  const q = $('pickSearch').value.trim().toLowerCase();
+  const leads = (await dbAll('leads')).filter(l => !l.clientId && l.status !== 'Стал клиентом' && l.status !== 'Отказ')
+    .filter(l => !q || ((l.name || '') + ' ' + (l.phone || '')).toLowerCase().includes(q))
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  const checked = new Set([...$('pickList').querySelectorAll('input:checked')].map(i => i.value));
+  $('pickList').innerHTML = leads.length ? leads.map(l =>
+    '<label class="pickrow"><input type="checkbox" value="' + esc(l.id) + '"' + (checked.has(l.id) ? ' checked' : '') + '><span><b>' + esc(l.name || 'Без имени') + '</b> ' + esc(l.phone || '') +
+    '<br><span class="meta">' + esc([l.source, l.request, l.status].filter(Boolean).join(' · ')) + '</span></span></label>').join('') : '<p class="msg">Нет обращений, которых ещё не перенесли.</p>';
+}
+$('btnPick').addEventListener('click', async ()=>{ $('pickSearch').value = ''; $('pickList').innerHTML = ''; await renderPick(); $('pickModal').classList.add('open'); });
+$('pickSearch').addEventListener('input', renderPick);
+$('btnPickClose').addEventListener('click', ()=>$('pickModal').classList.remove('open'));
+$('btnPickGo').addEventListener('click', async ()=>{
+  const ids = [...$('pickList').querySelectorAll('input:checked')].map(i => i.value);
+  if(!ids.length){ alert('Отметьте галочками, кого перенести.'); return; }
+  try{ for(const id of ids) await convertLead(id); }catch(err){ alert('Не всё сохранилось: ' + err.message); }
+  $('pickModal').classList.remove('open'); renderAll();
+});
+
+/* ================= ЗАПИСЬ ================= */
+async function renderDay(){
+  const date = $('dateInput').value;
+  const all = (await dbAll('bookings')).filter(b => b.date === date);
+  $('slotsList').innerHTML = SLOT_HOURS.map(h => {
+    const time = String(h).padStart(2, '0') + ':00';
+    const here = all.filter(b => b.time === time);
+    const who = here.length ? here.map(b => esc(b.name) + (b.phone ? ' · ' + esc(b.phone) : '') + (b._pending ? ' ⏳' : '')).join('<br>') + (here.length > 1 ? '<br><b class="late">⚠ двое на одно время</b>' : '') : 'свободно';
+    return '<div class="slot ' + (here.length ? 'busy' : 'free') + '" data-time="' + time + '"><span class="time">' + time + '</span><span class="who">' + who + '</span></div>';
+  }).join('');
+}
+$('dateInput').addEventListener('change', renderDay);
+$('slotsList').addEventListener('click', async e => {
+  const s = e.target.closest('.slot'); if(!s) return;
+  const date = $('dateInput').value, time = s.dataset.time;
+  const here = (await dbAll('bookings')).filter(b => b.date === date && b.time === time);
+  if(here.length){
+    for(const b of here){ if(confirm('Отменить запись: ' + b.name + ' на ' + time + '?')) await deleteRecord('booking', b.id); }
+  } else {
+    const name = prompt('Имя клиента на ' + time + ':'); if(!name) return;
+    const phone = prompt('Телефон:') || '';
+    try{ await saveRecord('booking', {id:uid(), date, time, name, phone}); }catch(err){ alert('Не сохранено: ' + err.message); return; }
+  }
+  renderDay(); renderToday();
+});
+
+/* ================= ЗАМЕРЫ ================= */
+let pendingPhotos = [], lastShare = '';
+function compressImage(file, maxSide = 1600, quality = 0.75){
+  return new Promise((resolve, reject)=>{
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      let w = img.naturalWidth, h = img.naturalHeight; const k = Math.min(1, maxSide / Math.max(w, h));
+      w = Math.round(w * k); h = Math.round(h * k);
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h); URL.revokeObjectURL(url);
+      resolve(cv.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('не удалось прочитать фото')); };
+    img.src = url;
+  });
+}
+function renderPhotoPreview(){
+  const box = $('mPhotoPreview'); box.innerHTML = '';
+  pendingPhotos.forEach((p, i) => {
+    const t = document.createElement('div'); t.className = 'thumb';
+    t.innerHTML = '<img src="' + p.preview + '"><button type="button">×</button>';
+    t.querySelector('button').addEventListener('click', ()=>{ pendingPhotos.splice(i, 1); renderPhotoPreview(); });
+    box.appendChild(t);
+  });
+}
+$('mPhotoInput').addEventListener('change', async e => {
+  const files = [...e.target.files]; if(!files.length) return;
+  $('measureMsg').className = 'msg'; $('measureMsg').textContent = 'Обрабатываю фото (' + files.length + ')…';
+  for(const f of files){
+    try{ const d = await compressImage(f); pendingPhotos.push({name:'фото_' + (pendingPhotos.length + 1) + '.jpg', data:d.split(',')[1], preview:d}); }catch(err){}
+  }
+  e.target.value = ''; $('measureMsg').textContent = ''; renderPhotoPreview();
+});
+async function fillClientSelect(){
+  const clients = (await dbAll('clients')).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  const cur = $('mClient').value;
+  $('mClient').innerHTML = '<option value="">— клиент не выбран —</option>' + clients.map(c => '<option value="' + esc(c.id) + '">' + esc((c.name || 'Без имени') + (c.phone ? ' · ' + c.phone : '')) + '</option>').join('');
+  $('mClient').value = cur;
+}
+async function fillOrderSelect(){
+  const cid = $('mClient').value, cur = $('mOrder').value;
+  const orders = (await dbAll('orders')).filter(o => o.clientId === cid && o.archived !== '1').sort((a, b) => (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0));
+  $('mOrder').innerHTML = '<option value="">— заказ не выбран —</option>' + orders.map(o => '<option value="' + esc(o.id) + '">' + esc((o.number ? '№' + o.number + ' ' : '') + (o.item || 'Заказ') + (o.title ? ' · ' + o.title : '')) + '</option>').join('');
+  if(orders.some(o => o.id === cur)) $('mOrder').value = cur;
+}
+function prefillFromClient(c, o){ if(!c) return; if(!$('mName').value) $('mName').value = c.name || ''; if(!$('mPhone').value) $('mPhone').value = c.phone || ''; if(!$('mAddress').value) $('mAddress').value = (o && o.address) || c.address || ''; }
+$('mClient').addEventListener('change', async ()=>{ await fillOrderSelect(); if($('mClient').value) prefillFromClient(await dbGet('clients', $('mClient').value)); });
+$('mOrder').addEventListener('change', async ()=>{ if($('mOrder').value){ const o = await dbGet('orders', $('mOrder').value); if(o && o.address && !$('mAddress').value) $('mAddress').value = o.address; } });
+
+function measureText(m){
+  return ['📐 Замер ' + (m.date || ''), m.name + (m.phone ? ', ' + m.phone : ''), m.address, m.sizes,
+    m.photosUrl ? 'Фото: ' + m.photosUrl : (m.photoCount ? 'Фото: ' + m.photoCount + ' шт (загружаются)' : '')].filter(Boolean).join('\n');
+}
+async function shareText(text){
+  if(navigator.share){ try{ await navigator.share({title:'PRINCIP', text}); return; }catch(e){ if(e && e.name === 'AbortError') return; } }
+  try{ await navigator.clipboard.writeText(text); alert('Скопировано. Вставьте в чат команды.'); }catch(e){ prompt('Скопируйте текст:', text); }
+}
+$('btnAddMeasure').addEventListener('click', async ()=>{
+  const msg = $('measureMsg'), name = $('mName').value.trim();
+  if(!name){ msg.className = 'msg err'; msg.textContent = 'Укажите имя клиента.'; return; }
+  if(pendingPhotos.length > 25){ msg.className = 'msg err'; msg.textContent = 'Слишком много фото за раз (максимум 25) — разделите на два замера.'; return; }
+  const photos = pendingPhotos.map(p => ({name:p.name, data:p.data}));
+  const rec = {id:uid(), date:$('mDate').value || todayStr(), clientId:$('mClient').value, name, phone:$('mPhone').value.trim(), address:$('mAddress').value.trim(), sizes:$('mSizes').value.trim(), photoCount:photos.length, orderId:$('mOrder').value};
+  try{ await saveRecord('measure', rec, photos); }
+  catch(err){ msg.className = 'msg err'; msg.textContent = '⚠️ НЕ сохранено: на телефоне не хватило места (' + err.message + '). Уберите часть фото и повторите — данные остались в форме.'; return; }
+  if(rec.orderId) await logEvent(rec.orderId, 'measure', 'Замер ' + fmtDate(rec.date) + (photos.length ? ', фото: ' + photos.length : ''));
+  lastShare = measureText(rec);
+  ['mName','mPhone','mAddress','mSizes'].forEach(i => $(i).value = ''); $('mClient').value = ''; $('mOrder').value = ''; pendingPhotos = []; renderPhotoPreview();
+  msg.className = 'msg'; msg.textContent = 'Сохранено на телефоне' + (photos.length ? ' вместе с ' + photos.length + ' фото' : '') + '. Уйдёт на сервер само.';
+  $('shareBox').innerHTML = '<button class="secondary small" id="btnShareLast">📤 Отправить копию в чат команды</button>';
+  $('btnShareLast').addEventListener('click', ()=>shareText(lastShare));
+  renderMeasures(true);
+});
+async function renderMeasures(force){
+  const box = $('measureList');
+  const orders = {}; (await dbAll('orders')).forEach(o => orders[o.id] = o);
+  const list = (await dbAll('measures')).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  box.innerHTML = list.length ? list.map(m =>
+    '<div class="item" data-id="' + esc(m.id) + '"><div class="top"><span class="nm">' + esc(m.name) + (orders[m.orderId] && orders[m.orderId].number ? ' · №' + esc(orders[m.orderId].number) : '') + '</span><span class="meta">' + esc(m.date) + '</span></div>' +
+    '<div class="meta">' + esc([m.phone, m.address].filter(Boolean).join(' · ')) + (m._pending ? ' <span class="pend">⏳ не отправлено</span>' : '') + '</div>' +
+    (m.sizes ? '<div class="meta">' + esc(m.sizes) + '</div>' : '') +
+    '<div class="acts">' + (m.photosUrl ? '<a href="' + esc(m.photosUrl) + '" target="_blank">📁 Фото (' + esc(m.photoCount) + ')</a>' : (m.photoCount && m._pending ? '<span class="meta">📷 ' + esc(m.photoCount) + ' фото — загрузятся вместе с замером</span>' : '')) +
+    '<button class="small secondary" data-act="share">📤</button></div></div>').join('') : '<p class="msg">Замеров пока нет.</p>';
+}
+$('measureList').addEventListener('click', async e => {
+  if(e.target.dataset.act !== 'share') return;
+  const m = await dbGet('measures', e.target.closest('.item').dataset.id); shareText(measureText(m));
+});
+
+/* ================= ИТОГИ ЗА 4 НЕДЕЛИ ================= */
+function inRange(s, from, to){ const d = (s && s.length > 10) ? parseIso(s) : parseYmd(s); return !!d && d >= from && d < to; }
+function periodMetrics(leads, clients, orders, bookings, from, to){
+  const L = leads.filter(l => inRange(l.createdAt, from, to));
+  const converted = L.filter(l => l.clientId || l.status === 'Стал клиентом');
+  const B = bookings.filter(b => inRange(b.date, from, to));
+  const contracts = orders.filter(o => inRange(o.contractDate, from, to));
+  const sum = contracts.reduce((s, o) => s + num(o.sum), 0);
+  let newC = 0, repC = 0;
+  clients.forEach(c => {
+    const own = orders.filter(o => o.clientId === c.id && o.contractDate).map(o => o.contractDate).sort();
+    if(!own.length) return;
+    const inP = own.filter(d => inRange(d, from, to)); if(!inP.length) return;
+    if(own[0] >= ymd(from)) newC++; else repC++;
+  });
+  return {leads:L.length, converted:converted.length, bookings:B.length, contracts:contracts.length, sum, avg:contracts.length ? sum / contracts.length : 0, newC, repC, L};
+}
+async function renderStats(){
+  const [leads, clients, orders, bookings] = await Promise.all([dbAll('leads'), dbAll('clients'), dbAll('orders'), dbAll('bookings')]);
+  const to = new Date(); to.setDate(to.getDate() + 1); to.setHours(0, 0, 0, 0);
+  const from = new Date(to.getTime() - 28 * 864e5), pfrom = new Date(from.getTime() - 28 * 864e5);
+  const a = periodMetrics(leads, clients, orders, bookings, from, to), p = periodMetrics(leads, clients, orders, bookings, pfrom, from);
+  const row = (l, x, y, f) => '<tr><td>' + l + '</td><td><b>' + (f ? f(x) : x) + '</b></td><td>' + (f ? f(y) : y) + '</td></tr>';
+  const pct = (n, d) => d ? Math.round(n / d * 100) + '%' : '—';
+  let h = '<div class="card"><h2>Итоги 4 недель</h2><p class="msg" style="margin:0 0 8px;">' + fmtDate(ymd(from)) + ' — ' + fmtDate(ymd(new Date(to.getTime() - 864e5))) + ' (справа — предыдущие 4 недели)</p><table class="st"><tr><th></th><th>Сейчас</th><th>Было</th></tr>' +
+    row('Обращений', a.leads, p.leads) + row('→ стали клиентами', a.converted, p.converted) +
+    '<tr><td>Конверсия</td><td><b>' + pct(a.converted, a.leads) + '</b></td><td>' + pct(p.converted, p.leads) + '</td></tr>' +
+    row('Записей (замер / офис)', a.bookings, p.bookings) + row('Договоров', a.contracts, p.contracts) +
+    row('Сумма договоров', a.sum, p.sum, money) + row('Средний договор', a.avg, p.avg, money) +
+    row('Новых клиентов', a.newC, p.newC) + row('Повторных клиентов', a.repC, p.repC) + '</table></div>';
+  h += await taskStatsHtml(from, to);
+  h += '<div class="card"><h2>Для расчёта сделки</h2><p class="msg" style="margin:0;color:var(--ink);font-size:14px;line-height:1.6;">Договоров за 4 недели: <b>' + a.contracts + '</b><br>Новых клиентов за 4 недели: <b>' + a.newC + '</b><br>Впишите эти два числа в «Нормативы» файла расчёта сделки.</p></div>';
+  const noDate = orders.filter(o => !o.contractDate && o.archived !== '1').length;
+  if(noDate) h += '<div class="card"><p class="msg err" style="margin:0;">У ' + noDate + ' заказов не указана дата договора — они не попали в итоги. Заполните «Дату договора» в карточке заказа.</p></div>';
+  const by = {}; a.L.forEach(l => { const s = l.source || 'Не указано'; (by[s] = by[s] || {n:0, c:0, k:0, sum:0}); by[s].n++; if(l.clientId){ by[s].c++; orders.filter(o => o.clientId === l.clientId && o.contractDate).forEach(o => { by[s].k++; by[s].sum += num(o.sum); }); } });
+  const keys = Object.keys(by).sort((x, y) => by[y].n - by[x].n);
+  h += '<div class="card"><h2>Откуда обращения (за 4 недели)</h2>' + (keys.length ? '<table class="st"><tr><th>Источник</th><th>Обращ.</th><th>Клиентов</th><th>Договоров</th><th>Сумма</th></tr>' +
+    keys.map(k => '<tr><td>' + esc(k) + '</td><td>' + by[k].n + '</td><td>' + by[k].c + '</td><td>' + by[k].k + '</td><td>' + money(by[k].sum) + '</td></tr>').join('') + '</table>' : '<p class="msg">За период обращений нет.</p>') + '</div>';
+  $('statsBody').innerHTML = h;
+}
+
+/* ================= НАСТРОЙКА И НАДЁЖНОСТЬ ================= */
+async function pingScript(ms){
+  const url = getUrl(); if(!url) return {ok:false, error:'нет ссылки', noUrl:true};
+  try{ const r = await fetchT(url + '?action=ping&key=' + encodeURIComponent(getKey()), {}, ms); return await r.json(); }
+  catch(e){ return {ok:false, error:'нет связи', offline:true}; }
+}
+function scriptInfoText(d){
+  if(d.noUrl) return 'Скрипт: ссылка не задана';
+  if(d.offline) return 'Скрипт: нет связи, версию не проверить';
+  if(!d.ok) return 'Скрипт отвечает, но: ' + d.error;
+  const rev = d.rev || 1;
+  return 'Скрипт: версия ' + rev + (rev >= NEED_SCRIPT_REV ? ' ✓' : ' — устарел, обновите (инструкция, «Как обновлять»)') + ' · ключ хранится: ' + (d.keySource || 'в коде');
+}
+async function renderSettings(){
+  $('urlInput').value = getUrl(); $('keyInput').value = getKey();
+  $('userSel').innerHTML = '<option value="">— выберите —</option>' + USERS.map(u => '<option' + (u === getUser() ? ' selected' : '') + '>' + u + '</option>').join('');
+  $('verInfo').style.whiteSpace = 'pre-wrap';
+  $('verInfo').textContent = 'Приложение: версия ' + APP_VERSION + ' · Скрипт: проверяю…';
+  pingScript(8000).then(d => { $('verInfo').textContent = 'Приложение: версия ' + APP_VERSION + '\n' + scriptInfoText(d); $('mailInfo').textContent = mailInfoText(d); });
+  const q = await dbAll('queue');
+  let persisted = '—';
+  try{ if(navigator.storage && navigator.storage.persisted) persisted = (await navigator.storage.persisted()) ? 'да (браузер не сотрёт данные сам)' : 'нет — добавьте приложение на экран «Домой»'; }catch(e){}
+  $('reliab').innerHTML = 'Хранилище на телефоне: ' + (memMode ? '<b class="late">недоступно (работа только в памяти страницы)</b>' : 'IndexedDB, работает') + '<br>' +
+    'Постоянное хранение: ' + persisted + '<br>Не отправлено записей: <b>' + q.length + '</b>' +
+    q.filter(i => i.lastError).map(i => '<br><span class="late">ошибка: ' + esc(i.lastError) + '</span>').join('');
+}
+function mailInfoText(d){
+  if(!d || !d.ok) return 'Нет связи со скриптом — состояние писем неизвестно.';
+  if(!d.mail) return 'Скрипт старой версии (без задач). Обновите скрипт — см. инструкцию.';
+  const m = d.mail;
+  return 'Автоматическая отправка: ' + (m.trigger ? 'включена ✓' : 'НЕ включена — запустите installTaskNotifier в скрипте') + '\n' +
+    'Почта записана у: ' + (m.ready.length ? m.ready.join(', ') : 'никого') + '\n' + (m.missing.length ? 'Нет почты у: ' + m.missing.join(', ') + ' (лист «Сотрудники» в таблице)' : '');
+}
+$('btnTestMail').addEventListener('click', async ()=>{
+  const m = $('mailMsg'), url = getUrl(), me = getUser(); m.className = 'msg err';
+  if(!url){ m.textContent = 'Сначала подключите хранилище.'; return; }
+  if(!me){ m.textContent = 'Сначала выберите своё имя выше.'; return; }
+  m.className = 'msg'; m.textContent = 'Отправляю…';
+  try{
+    const r = await fetchT(url, {method:'POST', body:JSON.stringify({key:getKey(), action:'testmail', name:me})}, 30000); const d = await r.json();
+    if(d.ok){ m.textContent = '✓ Письмо отправлено на ' + d.to + '. Посмотрите телефон: должно прийти уведомление.'; }
+    else { m.className = 'msg err'; m.textContent = 'Не получилось: ' + (d.error || 'ошибка'); }
+  }catch(e){ m.className = 'msg err'; m.textContent = 'Нет связи со скриптом.'; }
+});
+$('userSel').addEventListener('change', ()=>{ setUser($('userSel').value); updateSyncBar(); toast('Имя сохранено'); });
+$('userWarn').addEventListener('click', ()=>switchTab('settings'));
+$('btnSaveUrl').addEventListener('click', ()=>{ setUrl($('urlInput').value.trim()); setKey($('keyInput').value.trim()); $('settingsMsg').className = 'msg'; $('settingsMsg').textContent = 'Сохранено на этом телефоне.'; updateSyncBar(); flushQueue().then(()=>refreshAll({heavy:true})); });
+$('btnPing').addEventListener('click', async ()=>{
+  const m = $('settingsMsg'); const url = getUrl(); if(!url){ m.className = 'msg err'; m.textContent = 'Сначала вставьте ссылку.'; return; }
+  m.className = 'msg'; m.textContent = 'Проверяю…';
+  const d = await pingScript(20000);
+  m.className = d.ok ? 'msg' : 'msg err';
+  m.textContent = d.ok ? '✓ Связь есть, хранилище отвечает.' : (d.offline ? 'Нет связи с хранилищем (интернет или неверная ссылка).' : 'Ответ есть, но ошибка: ' + d.error);
+  $('verInfo').style.whiteSpace = 'pre-wrap'; $('verInfo').textContent = 'Приложение: версия ' + APP_VERSION + '\n' + scriptInfoText(d);
+});
+$('btnBackup').addEventListener('click', async ()=>{
+  const dump = {savedAt:new Date().toISOString()};
+  for(const s of DB_STORES){
+    dump[s] = (await dbAll(s)).map(r => { const c = Object.assign({}, r); delete c._thumb;
+      if(c.payload && c.payload.record){ const rec = Object.assign({}, c.payload.record); if(rec.photos) rec.photos = '[' + rec.photos.length + ' фото]'; if(rec.data) rec.data = '[фото]'; c.payload = Object.assign({}, c.payload, {record:rec}); } return c; });
+  }
+  const blob = new Blob([JSON.stringify(dump, null, 1)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'princip_копия_' + todayStr() + '.json'; document.body.appendChild(a); a.click(); a.remove();
+});
+$('btnSyncNow').addEventListener('click', async ()=>{ $('syncText').textContent = 'Отправляю…'; await flushQueue(); await refreshAll({heavy:true}); updateSyncBar(); });
+
+/* ================= ЗАПУСК ================= */
+async function renderAll(){
+  await Promise.all([renderOrders(), renderTasks(), renderToday(), renderLeads(), renderClients(), renderDay(), renderMeasures(), fillClientSelect(), updateSyncBar()]);
+  await fillOrderSelect();
+  if(state.openOrderId) await renderOrderPanel();
+  if(state.tab === 'stats') renderStats();
+}
+document.addEventListener('focusout', ()=>{ setTimeout(()=>{
+  if(state.dirtyLeads && !isEditing($('tab-leads'))){ state.dirtyLeads = false; renderLeads(true); }
+  if(state.dirtyClients && !isEditing($('tab-clients')) && !openDetails($('clientList'))){ state.dirtyClients = false; renderClients(true); }
+  if(state.dirtyOrders && !isEditing($('tab-orders'))){ state.dirtyOrders = false; renderOrders(true); }
+  if(state.dirtyPanel && !isEditing($('orderPanel'))){ state.dirtyPanel = false; renderOrderPanel(true); }
+  if(state.dirtyTasks && !isEditing($('tab-tasks'))){ state.dirtyTasks = false; renderTasks(true); }
+  if(state.dirtyTaskPanel && !isEditing($('taskPanel'))){ state.dirtyTaskPanel = false; renderTaskPanel(true); }
+}, 300); });
+
+
+/* ================= ЗАДАЧИ ================= */
+const TASK_STAGES = ['Новая','В работе','Ждёт','Готово'];
+const TASK_STYLE = { 'Новая':{c:'#98A0AA'}, 'В работе':{c:'#6F89B8'}, 'Ждёт':{c:'#D6B462', dark:true}, 'Готово':{c:'#6FA58A'} };
+const PRIORITIES = [['urgent','Срочно'],['normal','Обычная'],['low','Не срочно']];
+const PR_LABEL = {urgent:'Срочно', normal:'Обычная', low:'Не срочно'};
+const REPEATS = [['','Не повторять'],['daily','Каждый день'],['weekly','Каждую неделю'],['monthly','Каждый месяц'],['every','Каждые N дней']];
+const REPEAT_LABEL = {daily:'каждый день', weekly:'каждую неделю', monthly:'каждый месяц'};
+const taskStyle = t => TASK_STYLE[t.stage] || TASK_STYLE['Новая'];
+const taskPeople = t => String(t.assignees || '').split(',').map(s => s.trim()).filter(Boolean);
+function repeatText(t){ return t.repeat === 'every' ? 'каждые ' + (parseInt(t.repeatEvery, 10) || 1) + ' дн.' : (REPEAT_LABEL[t.repeat] || ''); }
+function fmtDur(secs){
+  secs = Math.max(0, Math.round(secs)); const d = Math.floor(secs / 86400), h = Math.floor(secs % 86400 / 3600), m = Math.floor(secs % 3600 / 60);
+  if(d) return d + ' д ' + h + ' ч';
+  if(h) return h + ' ч ' + pad(m) + ' мин';
+  if(m) return m + ' мин';
+  return secs ? 'меньше минуты' : '0';
+}
+function fmtClock(secs){ secs = Math.max(0, Math.round(secs)); return pad(Math.floor(secs / 3600)) + ':' + pad(Math.floor(secs % 3600 / 60)) + ':' + pad(secs % 60); }
+function dueMs(t){
+  const d = parseYmd(t.dueDate); if(!d) return null;
+  const m = /^(\d{1,2}):(\d{2})/.exec(t.dueTime || '');
+  if(m) d.setHours(+m[1], +m[2], 0, 0); else d.setHours(23, 59, 59, 0);
+  return d.getTime();
+}
+function taskOverdue(t, now){ const d = dueMs(t); return t.stage !== 'Готово' && d != null && d < now.getTime(); }
+function taskDueLabel(t, now){
+  if(!t.dueDate) return 'без срока';
+  const d = parseYmd(t.dueDate), td = parseYmd(ymd(now)), diff = Math.round((d - td) / 864e5);
+  const tm = t.dueTime ? ' ' + t.dueTime : '';
+  if(diff === 0) return 'сегодня' + tm; if(diff === 1) return 'завтра' + tm;
+  return 'до ' + fmtDate(t.dueDate).slice(0, 5) + tm;
+}
+function taskSortKey(t, now){
+  const pr = {urgent:0, normal:1, low:2}[t.priority || 'normal'];
+  return [taskOverdue(t, now) ? 0 : 1, pr, dueMs(t) == null ? 9e15 : dueMs(t), -(Date.parse(t.createdAt) || 0)];
+}
+function cmpArr(a, b){ for(let i = 0; i < a.length; i++){ if(a[i] !== b[i]) return a[i] < b[i] ? -1 : 1; } return 0; }
+
+/* Секундомер: состояние считается из записей истории (только добавляются — две руки не затрут друг друга) */
+function timerState(tev){
+  const run = {};
+  tev.filter(e => e.type === 'tstart' || e.type === 'tstop').sort((a, b) => (a.ts || '').localeCompare(b.ts || '') || (a.type === 'tstop' ? -1 : 1)).forEach(e => {
+    if(e.type === 'tstart') run[e.by] = {taskId:e.taskId, start:e.ts};
+    else if(run[e.by] && run[e.by].taskId === e.taskId) delete run[e.by];
+  });
+  return run;
+}
+function workedBy(tev, taskId, from, to){
+  const out = {};
+  tev.filter(e => e.type === 'tstop' && (!taskId || e.taskId === taskId) && (!from || inRange(e.ts, from, to))).forEach(e => { out[e.by] = (out[e.by] || 0) + (parseInt(e.secs, 10) || 0); });
+  return out;
+}
+function stageDurations(t, tev, now){
+  const evs = tev.filter(e => e.taskId === t.id && e.type === 'stage').sort((a, b) => (a.ts || '').localeCompare(b.ts || ''));
+  const dur = {}; let cur = 'Новая', start = parseIso(t.createdAt);
+  if(!start) return dur;
+  evs.forEach(e => { const ts = parseIso(e.ts); if(!ts) return; dur[cur] = (dur[cur] || 0) + Math.max(0, (ts - start) / 1000); cur = e.to || cur; start = ts; });
+  if(cur !== 'Готово' && t.stage !== 'Готово') dur[cur] = (dur[cur] || 0) + Math.max(0, (now - start) / 1000);
+  return dur;
+}
+
+async function logTaskEvent(taskId, type, text, extra){
+  return saveRecord('tevent', Object.assign({id:uid(), taskId, ts:new Date().toISOString(), by:getUser() || 'не указано', type, text, secs:'', from:'', to:''}, extra || {}));
+}
+const saveTask = fields => saveRecord('task', Object.assign({updatedBy:getUser() || ''}, fields));
+
+async function createTask(d){
+  const id = 't_' + uid(), nowIso = new Date().toISOString(), me = getUser() || '';
+  const rec = {id, createdAt:nowIso, createdBy:me, title:d.title, description:d.description || '', stage:'Новая', stageChangedAt:nowIso, stageBy:me,
+    priority:d.priority || 'normal', dueDate:d.dueDate || '', dueTime:d.dueDate ? (d.dueTime || '') : '', assignees:(d.assignees || []).join(', '), orderId:d.orderId || '',
+    repeat:d.dueDate ? (d.repeat || '') : '', repeatEvery:d.repeat === 'every' ? String(parseInt(d.repeatEvery, 10) || 1) : '', seriesId:id, openedAt:'', closedAt:'', stageNote:'', archived:''};
+  await saveTask(rec);
+  await logTaskEvent(id, 'created', 'Создана' + (rec.assignees ? ' · ответственные: ' + rec.assignees : '') + (rec.dueDate ? ' · срок ' + fmtDate(rec.dueDate) + (rec.dueTime ? ' ' + rec.dueTime : '') : ' · без срока'));
+  return id;
+}
+
+function nextDueDate(t){
+  const base = parseYmd(t.dueDate); if(!base) return null;
+  const anchor = base.getDate(), every = Math.max(1, parseInt(t.repeatEvery, 10) || 1);
+  const step = d => {
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    if(t.repeat === 'daily') x.setDate(x.getDate() + 1);
+    else if(t.repeat === 'weekly') x.setDate(x.getDate() + 7);
+    else if(t.repeat === 'every') x.setDate(x.getDate() + every);
+    else if(t.repeat === 'monthly'){ const last = new Date(x.getFullYear(), x.getMonth() + 2, 0).getDate(); return new Date(x.getFullYear(), x.getMonth() + 1, Math.min(anchor, last)); }
+    else return null;
+    return x;
+  };
+  let d = step(base); if(!d) return null;
+  const today = parseYmd(todayStr()); let guard = 0;
+  while(d < today && guard++ < 800) d = step(d);        // повтор не создаём «в прошлом»
+  return d;
+}
+async function spawnNextRepeat(t){
+  if(!t.repeat || !t.dueDate) return null;
+  const nd = nextDueDate(t); if(!nd) return null;
+  const id = 'tr_' + (t.seriesId || t.id) + '_' + ymd(nd);          // один и тот же id — повторное закрытие дубль не создаст
+  if(await dbGet('tasks', id)) return null;
+  const nowIso = new Date().toISOString();
+  await saveRecord('task', {id, createdAt:nowIso, createdBy:t.createdBy || '', title:t.title, description:t.description || '', stage:'Новая', stageChangedAt:nowIso, stageBy:'',
+    priority:t.priority || 'normal', dueDate:ymd(nd), dueTime:t.dueTime || '', assignees:t.assignees || '', orderId:t.orderId || '', repeat:t.repeat, repeatEvery:t.repeatEvery || '',
+    seriesId:t.seriesId || t.id, openedAt:'', closedAt:'', stageNote:'', updatedBy:'', archived:'', notified:taskPeople(t).map(a => 'as:' + a).join('|')});
+  await logTaskEvent(id, 'created', 'Создана автоматически (повтор: ' + repeatText(t) + ') · срок ' + fmtDate(ymd(nd)));
+  await logTaskEvent(t.id, 'repeat', 'Следующая задача создана на ' + fmtDate(ymd(nd)));
+  return nd;
+}
+
+async function changeTaskStage(id, newStage){
+  const t = await dbGet('tasks', id); if(!t || t.stage === newStage) return;
+  const nowIso = new Date().toISOString();
+  const f = {id, stage:newStage, stageChangedAt:nowIso, stageBy:getUser() || 'не указано', stageNote:''};
+  if(newStage === 'В работе' && !t.openedAt) f.openedAt = nowIso;
+  if(newStage === 'Готово') f.closedAt = nowIso; else if(t.closedAt) f.closedAt = '';
+  await saveTask(f);
+  await logTaskEvent(id, 'stage', 'Этап: ' + t.stage + ' → ' + newStage, {from:t.stage, to:newStage});
+  if(newStage === 'Готово'){
+    const run = timerState(await dbAll('tevents'));
+    for(const name of Object.keys(run)){ if(run[name].taskId === id) await stopTimerRec(id, run[name].start, name, 'остановлен: задача закрыта'); }
+    const nd = await spawnNextRepeat(Object.assign({}, t, f));
+    if(nd) toast('Следующая задача создана на ' + fmtDate(ymd(nd)));
+  }
+}
+async function stopTimerRec(taskId, startIso, by, why, secsOverride){
+  const secs = secsOverride != null ? secsOverride : Math.max(0, Math.round((Date.now() - new Date(startIso).getTime()) / 1000));
+  return saveRecord('tevent', {id:uid(), taskId, ts:new Date().toISOString(), by, type:'tstop', text:'Секундомер: ' + fmtDur(secs) + (why ? ' (' + why + ')' : ''), secs:String(secs), from:'', to:''});
+}
+async function startTimer(taskId){
+  const me = getUser(); if(!me){ alert('Сначала выберите своё имя в «Настройке».'); return; }
+  const run = timerState(await dbAll('tevents'))[me];
+  if(run && run.taskId === taskId) return;
+  if(run) await stopTimerRec(run.taskId, run.start, me, 'остановлен: начата другая задача');
+  await logTaskEvent(taskId, 'tstart', 'Секундомер: начал(а) работу');
+  const t = await dbGet('tasks', taskId);
+  if(t && t.stage !== 'В работе' && t.stage !== 'Готово') await changeTaskStage(taskId, 'В работе');
+}
+async function stopTimer(taskId){
+  const me = getUser(); const run = timerState(await dbAll('tevents'))[me];
+  if(!run || run.taskId !== taskId) return;
+  let secs = Math.max(0, Math.round((Date.now() - new Date(run.start).getTime()) / 1000)), why = '';
+  if(secs > 12 * 3600){
+    const v = prompt('Секундомер шёл ' + fmtDur(secs) + ' — возможно, забыли остановить. Сколько часов записать? (например 1.5)', '1');
+    if(v === null) return;
+    const h = num(v); secs = Math.round(Math.max(0, h) * 3600); why = 'поправлено вручную';
+  }
+  await stopTimerRec(taskId, run.start, me, why, secs);
+}
+
+/* ----- список ----- */
+state.taskPerson = ''; state.taskFilter = 'active'; state.openTaskId = '';
+function taskPersonValue(){ const v = state.taskPerson || (getUser() ? 'me' : 'all'); return v === 'me' ? (getUser() || 'all') : v; }
+function taskCardHtml(t, ctx){
+  const st = taskStyle(t), now = ctx.now, od = taskOverdue(t, now);
+  const who = taskPeople(t), orderT = t.orderId && ctx.omap[t.orderId];
+  const running = Object.keys(ctx.run).filter(n => ctx.run[n].taskId === t.id);
+  const pr = t.priority === 'urgent' ? '<span class="prb urgent">Срочно</span>' : t.priority === 'low' ? '<span class="prb low">Не срочно</span>' : '';
+  const meta = [
+    '<span class="' + (od ? 'late' : '') + '">' + (od ? '⚠ ' : '') + esc(taskDueLabel(t, now)) + '</span>',
+    who.length ? esc(who.join(', ')) : 'без ответственного',
+    t.repeat ? '↻ ' + esc(repeatText(t)) : '', orderT ? '№' + esc(orderT.number || '—') : '',
+    running.length ? '⏱ ' + esc(running.join(', ')) : ''
+  ].filter(Boolean).join(' · ');
+  return '<div class="ocard tcard" data-tid="' + esc(t.id) + '" style="--c:' + st.c + ';--t:' + tint(st.c) + '"><div class="top"><span class="nm">' + pr + esc(t.title || 'Без названия') + '</span><span class="badge' + (st.dark ? ' dark' : '') + '" style="--c:' + st.c + '">' + esc(t.stage) + '</span></div>' +
+    '<div class="meta">' + meta + (t._pending ? ' <span class="pend">⏳ не отправлено</span>' : '') + '</div>' +
+    (t.description && ctx.full ? '<div class="meta">' + esc(String(t.description).slice(0, 90)) + '</div>' : '') + '</div>';
+}
+async function taskCtx(){
+  const [orders, clients, tev] = await Promise.all([dbAll('orders'), dbAll('clients'), dbAll('tevents')]);
+  const cmap = {}; clients.forEach(c => cmap[c.id] = c); const omap = {}; orders.forEach(o => omap[o.id] = o);
+  return {now:new Date(), omap, cmap, tev, run:timerState(tev), orders};
+}
+async function renderTasks(force){
+  if(!force && isEditing($('tab-tasks'))){ state.dirtyTasks = true; return; }
+  const [tasks, ctx] = await Promise.all([dbAll('tasks'), taskCtx()]); ctx.full = true;
+  const me = getUser(), now = ctx.now;
+  const mineAttn = tasks.filter(t => me && taskPeople(t).includes(me) && taskOverdue(t, now)).length;
+  $('nTasks').style.display = mineAttn ? 'inline-block' : 'none'; $('nTasks').textContent = mineAttn;
+  const pv = taskPersonValue(), q = $('taskSearch').value.trim().toLowerCase();
+  const byPerson = tasks.filter(t => pv === 'all' || taskPeople(t).includes(pv));
+  const cnt = {active:0, overdue:0}; TASK_STAGES.forEach(s => cnt[s] = 0);
+  byPerson.forEach(t => { cnt[t.stage] = (cnt[t.stage] || 0) + 1; if(t.stage !== 'Готово') cnt.active++; if(taskOverdue(t, now)) cnt.overdue++; });
+  const pchips = [[me ? 'me' : 'all', me ? 'Мои' : 'Все']].concat(me ? [['all', 'Все']] : [], USERS.filter(u => u !== me).map(u => [u, u]));
+  const curP = state.taskPerson || (me ? 'me' : 'all');
+  $('taskPeople').innerHTML = pchips.map(([k, l]) => '<span class="chip' + (k === curP ? ' on' : '') + '" data-p="' + esc(k) + '">' + esc(l) + '</span>').join('');
+  const fchips = [['active', 'Активные ' + cnt.active, null], ['overdue', '⚠ Просрочено ' + cnt.overdue, null]].concat(TASK_STAGES.map(s => [s, s + ' ' + cnt[s], TASK_STYLE[s].c]));
+  $('taskChips').innerHTML = fchips.map(([k, l, c]) => '<span class="chip' + (k === state.taskFilter ? ' on' : '') + '" data-k="' + esc(k) + '"' + (c ? ' style="--c:' + c + '"><i class="dot"></i>' : '>') + esc(l) + '</span>').join('');
+  let list = byPerson.filter(t => state.taskFilter === 'active' ? t.stage !== 'Готово' : state.taskFilter === 'overdue' ? taskOverdue(t, now) : t.stage === state.taskFilter);
+  if(q) list = list.filter(t => ((t.title || '') + ' ' + (t.description || '') + ' ' + (t.assignees || '')).toLowerCase().includes(q));
+  if(state.taskFilter === 'Готово') list.sort((a, b) => (b.closedAt || b.stageChangedAt || '').localeCompare(a.closedAt || a.stageChangedAt || '')), list = list.slice(0, 60);
+  else list.sort((a, b) => cmpArr(taskSortKey(a, now), taskSortKey(b, now)));
+  $('taskList').innerHTML = list.length ? list.map(t => taskCardHtml(t, ctx)).join('') :
+    '<p class="msg">' + (q ? 'Ничего не найдено по «' + esc(q) + '».' : state.taskFilter === 'active' ? 'Активных задач нет ✓ Нажмите «+ Новая задача».' : 'Здесь пусто.') + '</p>';
+  if(state.openTaskId) renderTaskPanel();
+}
+$('taskPeople').addEventListener('click', e => { const c = e.target.closest('.chip'); if(!c) return; state.taskPerson = c.dataset.p; renderTasks(true); });
+$('taskChips').addEventListener('click', e => { const c = e.target.closest('.chip'); if(!c) return; state.taskFilter = c.dataset.k; renderTasks(true); });
+$('taskSearch').addEventListener('input', () => renderTasks(true));
+$('taskList').addEventListener('click', e => { const c = e.target.closest('[data-tid]'); if(c) openTask(c.dataset.tid); });
+
+/* ----- новая задача ----- */
+function openNewTask(orderId){
+  $('ntTitle').value = ''; $('ntDesc').value = ''; $('ntDue').value = 'none'; $('ntDate').value = todayStr(); $('ntTime').value = '';
+  $('ntPriority').value = 'normal'; $('ntRepeat').value = ''; $('ntEvery').value = '2'; $('ntMsg').textContent = '';
+  $('ntAsg').innerHTML = USERS.map(u => '<label class="tick"><input type="checkbox" value="' + esc(u) + '"' + (u === getUser() ? ' checked' : '') + '> ' + esc(u) + '</label>').join('');
+  fillOrderOptions($('ntOrder'), orderId || '');
+  ntSync(); $('newTaskModal').classList.add('open');
+}
+async function fillOrderOptions(sel, current){
+  const [orders, clients] = await Promise.all([dbAll('orders'), dbAll('clients')]); const cmap = {}; clients.forEach(c => cmap[c.id] = c);
+  const list = orders.filter(o => o.archived !== '1' || o.id === current).sort((a, b) => (parseInt(b.number, 10) || 0) - (parseInt(a.number, 10) || 0));
+  sel.innerHTML = '<option value="">— не связана с заказом —</option>' + list.map(o => '<option value="' + esc(o.id) + '"' + (o.id === current ? ' selected' : '') + '>' + esc(orderLabel(o, cmap[o.clientId]) + (o.item ? ' · ' + o.item : '')) + '</option>').join('');
+}
+function ntSync(){
+  const mode = $('ntDue').value;
+  $('ntDateRow').style.display = mode === 'none' ? 'none' : 'grid'; $('ntDate').style.display = mode === 'date' ? 'block' : 'none';
+  $('ntRepeatRow').style.display = mode === 'none' ? 'none' : 'block'; $('ntEvery').style.display = $('ntRepeat').value === 'every' ? 'block' : 'none';
+}
+$('ntDue').addEventListener('change', ntSync); $('ntRepeat').addEventListener('change', ntSync);
+$('btnNewTask').addEventListener('click', () => openNewTask(''));
+$('btnNtClose').addEventListener('click', () => $('newTaskModal').classList.remove('open'));
+$('btnNtCreate').addEventListener('click', async () => {
+  const title = $('ntTitle').value.trim(), m = $('ntMsg'); m.className = 'msg err';
+  if(!title){ m.textContent = 'Напишите название задачи.'; return; }
+  const mode = $('ntDue').value; let due = '';
+  if(mode === 'today') due = todayStr(); else if(mode === 'tomorrow'){ const d = new Date(); d.setDate(d.getDate() + 1); due = ymd(d); } else if(mode === 'date') due = $('ntDate').value;
+  if(mode === 'date' && !due){ m.textContent = 'Выберите дату срока.'; return; }
+  if($('ntRepeat').value && !due){ m.textContent = 'Для повторяющейся задачи нужен срок.'; return; }
+  const asg = [...$('ntAsg').querySelectorAll('input:checked')].map(i => i.value);
+  await createTask({title, description:$('ntDesc').value.trim(), dueDate:due, dueTime:due ? $('ntTime').value : '', priority:$('ntPriority').value, assignees:asg,
+    orderId:$('ntOrder').value, repeat:$('ntRepeat').value, repeatEvery:$('ntEvery').value});
+  $('newTaskModal').classList.remove('open'); toast('Задача создана'); await renderAll();
+  if(!state.openOrderId) switchTab('tasks');
+});
+
+/* ----- карточка задачи ----- */
+function openTask(id){
+  state.openTaskId = id; state.resetTaskScroll = true; state.taskHistOpen = false;
+  $('taskPanel').classList.add('open'); document.body.style.overflow = 'hidden';
+  renderTaskPanel(true);
+  startTaskClock();
+}
+function closeTask(){ state.openTaskId = ''; $('taskPanel').classList.remove('open'); document.body.style.overflow = ''; stopTaskClock(); renderAll(); }
+$('taskBack').addEventListener('click', closeTask);
+let taskClockT = null;
+function startTaskClock(){ stopTaskClock(); taskClockT = setInterval(() => { const el = $('taskClock'); if(el && el.dataset.start) el.textContent = fmtClock((Date.now() - new Date(el.dataset.start).getTime()) / 1000); }, 1000); }
+function stopTaskClock(){ if(taskClockT){ clearInterval(taskClockT); taskClockT = null; } }
+
+async function renderTaskPanel(force){
+  const id = state.openTaskId; if(!id) return;
+  const panel = $('taskPanel');
+  if(!force && isEditing(panel)){ state.dirtyTaskPanel = true; return; }
+  const t = await dbGet('tasks', id); if(!t){ closeTask(); return; }
+  const ctx = await taskCtx(), now = ctx.now, me = getUser();
+  const evs = ctx.tev.filter(e => e.taskId === id).sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
+  const st = taskStyle(t), od = taskOverdue(t, now);
+  $('taskTitleTop').textContent = t.title || 'Задача';
+  const scroller = state.resetTaskScroll ? 0 : panel.scrollTop; state.resetTaskScroll = false;
+  const hd = $('taskBody').querySelector('details'); if(hd) state.taskHistOpen = hd.open;
+  const inStage = parseIso(t.stageChangedAt) || parseIso(t.createdAt), stageDays = inStage ? fmtDur((now - inStage) / 1000) : '';
+  let nextBtn = '';
+  if(t.stage === 'Новая') nextBtn = '<button class="full" data-act="go" data-to="В работе">Взять в работу →</button>';
+  else if(t.stage === 'В работе') nextBtn = '<button class="full" data-act="go" data-to="Готово">Выполнено ✓</button><button class="full secondary" data-act="go" data-to="Ждёт" style="margin-top:6px;">Поставить на ожидание</button>';
+  else if(t.stage === 'Ждёт') nextBtn = '<button class="full" data-act="go" data-to="В работе">Вернуть в работу</button><button class="full secondary" data-act="go" data-to="Готово" style="margin-top:6px;">Выполнено ✓</button>';
+  else nextBtn = '<button class="full secondary" data-act="go" data-to="В работе">Открыть заново</button>';
+  const run = ctx.run, myRun = me && run[me] && run[me].taskId === id ? run[me] : null;
+  const others = Object.keys(run).filter(n => n !== me && run[n].taskId === id);
+  const worked = workedBy(ctx.tev, id), totalW = Object.values(worked).reduce((a, b) => a + b, 0);
+  const sd = stageDurations(t, ctx.tev, now);
+  const created = parseIso(t.createdAt), opened = parseIso(t.openedAt), closed = parseIso(t.closedAt);
+  const orderT = t.orderId && ctx.omap[t.orderId];
+  let h = '';
+  if(od) h += '<div class="banner" style="--c:#B5483F;--t:#B5483F1F">⚠ Срок прошёл: ' + esc(fmtDate(t.dueDate)) + (t.dueTime ? ' ' + esc(t.dueTime) : '') + '</div>';
+  h += '<div class="pcard" style="--c:' + st.c + ';--t:' + tint(st.c) + '"><h3>Этап</h3><div style="text-align:center;margin-bottom:8px;"><span class="badge' + (st.dark ? ' dark' : '') + '" style="--c:' + st.c + '">' + esc(t.stage) + '</span> <span class="meta" style="display:inline;">в этом этапе ' + esc(stageDays) + (t.stageBy ? ' · перевёл(а) ' + esc(t.stageBy) : '') + '</span></div>' +
+    '<select data-act="stage">' + TASK_STAGES.map(s => '<option' + (s === t.stage ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>' + nextBtn +
+    '<label class="lb">Заметка к этапу (одна строка)</label><input data-f="stageNote" value="' + esc(t.stageNote) + '" placeholder="Например: ждём ответ фабрики"></div>';
+  h += '<div class="pcard"><h3>Секундомер</h3>' +
+    (myRun ? '<div style="text-align:center;font-family:var(--serif);font-size:30px;margin:4px 0 8px;" id="taskClock" data-start="' + esc(myRun.start) + '">' + fmtClock((now - new Date(myRun.start).getTime()) / 1000) + '</div><button class="full" data-act="tstop">■ Остановить</button>' :
+      '<button class="full" data-act="tstart">▶ Начать работу' + (me ? '' : ' (выберите имя в «Настройке»)') + '</button>') +
+    (others.length ? '<p class="msg">Сейчас работают: ' + others.map(n => esc(n)).join(', ') + '</p>' : '') +
+    '<p class="msg">' + (totalW ? 'Отработано: ' + Object.keys(worked).map(n => '<b>' + esc(n) + '</b> ' + fmtDur(worked[n])).join(' · ') + ' · всего <b>' + fmtDur(totalW) + '</b>' : 'Секундомер не включали. Он необязателен: время по этапам считается само.') + '</p></div>';
+  h += '<div class="pcard"><h3>Задача</h3>' +
+    inp('title', 'Название', t.title) +
+    '<label class="lb">Описание</label><textarea data-f="description" placeholder="Что именно сделать">' + esc(t.description) + '</textarea>' +
+    '<div class="g2"><div>' + inp('dueDate', 'Срок (дата)', t.dueDate, 'date') + '</div><div>' + inp('dueTime', 'Время (необязательно)', t.dueTime, 'time') + '</div></div>' +
+    (t.dueDate ? '<button class="small secondary" data-act="nodue" style="margin-bottom:8px;">Убрать срок (без срока)</button>' : '<p class="msg" style="margin:0 0 8px;">Сейчас без срока.</p>') +
+    '<div class="g2"><div><label class="lb">Срочность</label><select data-f="priority">' + PRIORITIES.map(([k, l]) => '<option value="' + k + '"' + ((t.priority || 'normal') === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div>' +
+    '<div><label class="lb">Повтор</label><select data-f="repeat">' + REPEATS.map(([k, l]) => '<option value="' + k + '"' + ((t.repeat || '') === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div></div>' +
+    (t.repeat === 'every' ? inp('repeatEvery', 'Повторять каждые (дней)', t.repeatEvery || '1', 'number', 'min="1" inputmode="numeric"') : '') +
+    (t.repeat && !t.dueDate ? '<p class="msg err">Для повтора нужен срок.</p>' : (t.repeat ? '<p class="msg">Когда задачу закроют, сама появится следующая.</p>' : '')) +
+    '<label class="lb">Ответственные</label><div id="tpAsg">' + USERS.map(u => '<label class="tick"><input type="checkbox" data-asg="' + esc(u) + '"' + (taskPeople(t).includes(u) ? ' checked' : '') + '> ' + esc(u) + '</label>').join('') + '</div>' +
+    '<label class="lb">По заказу</label><select data-f="orderId" id="tpOrder"></select>' +
+    (orderT ? '<button class="small secondary" data-act="openorder" style="margin-top:4px;">Открыть заказ №' + esc(orderT.number || '') + '</button>' : '') +
+    '<p class="msg">Поставил(а): ' + esc(t.createdBy || '—') + ' · ' + esc(fmtDateTime(t.createdAt)) + '</p></div>';
+  h += '<div class="pcard"><h3>Время</h3>' +
+    '<div class="row2"><span>Создана</span><b>' + esc(fmtDateTime(t.createdAt)) + '</b></div>' +
+    '<div class="row2"><span>Взята в работу</span><b>' + (opened ? esc(fmtDateTime(t.openedAt)) + (created ? ' · через ' + fmtDur((opened - created) / 1000) : '') : 'ещё нет') + '</b></div>' +
+    '<div class="row2"><span>Закрыта</span><b>' + (closed ? esc(fmtDateTime(t.closedAt)) + (created ? ' · всего ' + fmtDur((closed - created) / 1000) : '') : (t.stage === 'Готово' ? '—' : 'не закрыта · идёт ' + (created ? fmtDur((now - created) / 1000) : ''))) + '</b></div>' +
+    '<div class="row2"><span>По этапам</span><b style="text-align:right;">' + (Object.keys(sd).length ? TASK_STAGES.filter(s => sd[s]).map(s => esc(s) + ' ' + fmtDur(sd[s])).join('<br>') : '—') + '</b></div></div>';
+  h += '<details class="pcard"' + (state.taskHistOpen ? ' open' : '') + ' style="--c:#98A0AA;--t:#fff;"><summary style="font-weight:800;cursor:pointer;">История задачи (' + evs.length + ')</summary><div style="padding-top:8px;">' +
+    (evs.length ? evs.map(e => '<div class="phrow"><span>' + esc(e.text) + '<br><span class="meta">' + fmtDateTime(e.ts) + ' · ' + esc(e.by) + '</span></span></div>').join('') : '<p class="msg">Записей пока нет.</p>') + '</div></details>';
+  h += '<div class="pcard" style="--c:#98A0AA;--t:#fff;"><div class="acts" style="justify-content:center;"><button class="small secondary" data-act="tdelete" style="color:var(--warn);">Удалить задачу</button></div><p class="msg" style="text-align:center;">Изменения сохраняются автоматически.</p></div>';
+  $('taskBody').innerHTML = h;
+  fillOrderOptions($('tpOrder'), t.orderId || '');
+  panel.scrollTop = scroller;
+}
+const refreshTaskUI = async () => { await renderAll(); await renderTaskPanel(true); };
+async function saveTaskField(id, f, value){
+  const t = await dbGet('tasks', id); if(!t) return;
+  const old = t[f] || ''; if(String(old) === String(value)) return;
+  const fields = {id, [f]:value};
+  if(f === 'dueDate' && !value){ fields.dueTime = ''; fields.repeat = ''; fields.repeatEvery = ''; }
+  if(f === 'title' && !value){ renderTaskPanel(true); return; }
+  if(f === 'repeat' && value === 'every' && !t.repeatEvery) fields.repeatEvery = '2';
+  await saveTask(fields);
+  const names = {title:'Название', description:'Описание', dueDate:'Срок', dueTime:'Время срока', priority:'Срочность', repeat:'Повтор', repeatEvery:'Повтор каждые N дней', orderId:'Заказ', stageNote:''};
+  const show = v => f === 'priority' ? (PR_LABEL[v || 'normal']) : f === 'dueDate' ? (v ? fmtDate(v) : 'без срока') : f === 'repeat' ? (v ? repeatText({repeat:v, repeatEvery:t.repeatEvery}) : 'нет') : (v || '—');
+  if(names[f]) await logTaskEvent(id, 'edit', names[f] + (f === 'description' ? ' изменено' : ': ' + show(old) + ' → ' + show(value)));
+  if(f === 'title') $('taskTitleTop').textContent = value;
+  if(f === 'repeat' || f === 'dueDate') renderTaskPanel(true);
+}
+$('taskBody').addEventListener('change', async e => {
+  const id = state.openTaskId, t = e.target; if(!id) return;
+  if(t.dataset.act === 'stage'){ await changeTaskStage(id, t.value); await refreshTaskUI(); return; }
+  if(t.dataset.asg !== undefined){
+    const cur = await dbGet('tasks', id); const set = new Set(taskPeople(cur)); if(t.checked) set.add(t.dataset.asg); else set.delete(t.dataset.asg);
+    const list = USERS.filter(u => set.has(u)).concat([...set].filter(u => !USERS.includes(u)));
+    await saveTask({id, assignees:list.join(', ')});
+    await logTaskEvent(id, 'edit', 'Ответственные: ' + (cur.assignees || '—') + ' → ' + (list.join(', ') || '—'));
+    await refreshTaskUI(); return;
+  }
+  if(t.dataset.f){ await saveTaskField(id, t.dataset.f, t.value.trim()); renderTasks(true); }
+});
+$('taskBody').addEventListener('click', async e => {
+  const id = state.openTaskId; if(!id) return;
+  const b = e.target.closest('[data-act]'); if(!b || b.tagName === 'INPUT' || b.tagName === 'SELECT') return;
+  const act = b.dataset.act, t = await dbGet('tasks', id);
+  if(act === 'go'){ await changeTaskStage(id, b.dataset.to); await refreshTaskUI(); }
+  if(act === 'tstart'){ await startTimer(id); await refreshTaskUI(); }
+  if(act === 'tstop'){ await stopTimer(id); await refreshTaskUI(); }
+  if(act === 'nodue'){ await saveTaskField(id, 'dueDate', ''); await refreshTaskUI(); }
+  if(act === 'openorder' && t && t.orderId){ const oid = t.orderId; closeTask(); openOrder(oid); }
+  if(act === 'tdelete' && confirm('Удалить задачу «' + (t.title || '') + '»? Это нельзя отменить.')){ await deleteRecord('task', id); closeTask(); toast('Задача удалена'); }
+});
+
+/* ----- «Сегодня» и «Итоги» ----- */
+async function myTaskAttention(tasks, now){
+  const me = getUser(); if(!me) return [];
+  const today = todayStr();
+  return tasks.filter(t => t.stage !== 'Готово' && taskPeople(t).includes(me) && (taskOverdue(t, now) || t.dueDate === today || (t.priority === 'urgent' && t.stage === 'Новая')))
+    .sort((a, b) => cmpArr(taskSortKey(a, now), taskSortKey(b, now)));
+}
+async function taskStatsHtml(from, to){
+  const [tasks, tev] = await Promise.all([dbAll('tasks'), dbAll('tevents')]), now = new Date();
+  const created = tasks.filter(t => inRange(t.createdAt, from, to)), closed = tasks.filter(t => t.closedAt && inRange(t.closedAt, from, to));
+  const active = tasks.filter(t => t.stage !== 'Готово'), overdue = active.filter(t => taskOverdue(t, now));
+  const avg = closed.length ? closed.reduce((s, t) => s + Math.max(0, (parseIso(t.closedAt) - parseIso(t.createdAt)) / 1000), 0) / closed.length : 0;
+  const w = workedBy(tev, '', from, to);
+  let h = '<div class="card"><h2>Задачи за 4 недели</h2><table class="st"><tr><th></th><th>Всего</th></tr>' +
+    '<tr><td>Создано</td><td><b>' + created.length + '</b></td></tr><tr><td>Закрыто</td><td><b>' + closed.length + '</b></td></tr>' +
+    '<tr><td>Сейчас открыто</td><td><b>' + active.length + '</b></td></tr><tr><td>Из них просрочено</td><td><b' + (overdue.length ? ' class="late"' : '') + '>' + overdue.length + '</b></td></tr>' +
+    '<tr><td>Среднее время до закрытия</td><td><b>' + (closed.length ? fmtDur(avg) : '—') + '</b></td></tr></table>';
+  h += '<table class="st" style="margin-top:12px;"><tr><th>Кто</th><th>Открыто</th><th>Закрыто</th><th>Просроч.</th><th>Секундомер</th></tr>' +
+    USERS.map(u => '<tr><td>' + esc(u) + '</td><td>' + active.filter(t => taskPeople(t).includes(u)).length + '</td><td>' + closed.filter(t => taskPeople(t).includes(u)).length + '</td><td>' + overdue.filter(t => taskPeople(t).includes(u)).length + '</td><td>' + (w[u] ? fmtDur(w[u]) : '—') + '</td></tr>').join('') + '</table>' +
+    '<p class="msg">Закрытые считаются каждому из ответственных. Секундомер — только то, что отметили кнопкой «Начать работу».</p></div>';
+  return h;
+}
+
+(async function init(){
+  $('ver').textContent = 'v' + APP_VERSION.split(' ')[0];
+  fillSelect($('lSource'), SOURCES); fillSelect($('lRequest'), REQUESTS);
+  $('dateInput').value = todayStr(); $('mDate').value = todayStr();
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+  await openDb();
+  await renderAll();
+  await flushQueue(); await refreshAll({heavy:true});
+  setInterval(flushQueue, 15000);
+  setInterval(()=>{ if(!isEditing(document.body) && !openDetails(document.body)) refreshAll(); }, 120000);
+  window.addEventListener('online', ()=>{ flushQueue().then(()=>refreshAll({heavy:true})); updateSyncBar(); });
+  window.addEventListener('offline', updateSyncBar);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ flushQueue().then(()=>refreshAll()); } });
+  if('serviceWorker' in navigator && location.protocol !== 'file:'){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+})();
+</script>
+</body>
+</html>
